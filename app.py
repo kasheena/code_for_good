@@ -201,7 +201,7 @@ def main():
     st.markdown(f"<style>{custom_css}</style>", unsafe_allow_html=True)
 
     st.title("Mental Health Early Warning System")
-    st.markdown("AI-powered early detection and intervention for mental health concerns", unsafe_allow_html=True, style="color: #777;")
+    st.markdown("AI-powered early detection and intervention for mental health concerns", unsafe_allow_html=True)
 
     # Create tabs
     tab1, tab2, tab3 = st.tabs(["Text Analysis", "Behavioral Trends", "About"])
