@@ -6,7 +6,8 @@ import random
 import nltk
 from nltk.sentiment import SentimentIntensityAnalyzer
 import re
-
+# --- Main App ---
+st.set_page_config(page_title="VibeCheck: Gen Z Mental Health", layout="wide", page_icon="🧠")
 # Download necessary NLTK data (only needs to be done once)
 try:
     nltk.data.find('vader_lexicon')
@@ -134,8 +135,7 @@ sample_entries = [
     }
 ]
 
-# --- Main App ---
-st.set_page_config(page_title="VibeCheck: Gen Z Mental Health", layout="wide", page_icon="🧠")
+
 
 # --- Hero Section ---
 st.markdown("""
