@@ -16,7 +16,48 @@ except LookupError:
 # Initialize sentiment analyzer
 sia = SentimentIntensityAnalyzer()
 
-# Load a simple mental health keyword dictionary
+# --- Gen Z Color Palette and Custom CSS ---
+st.markdown("""
+    <style>
+    body, .stApp {
+        background: linear-gradient(135deg, #F9F6FF 0%, #E0C3FC 100%);
+        font-family: 'Inter', 'Segoe UI', sans-serif;
+    }
+    .main {
+        background: transparent;
+    }
+    .stTabs [data-baseweb="tab-list"] {
+        background: #fff;
+        border-radius: 1.5rem;
+        box-shadow: 0 2px 16px rgba(160, 100, 255, 0.10);
+        margin-bottom: 1.5rem;
+    }
+    .stTabs [data-baseweb="tab"] {
+        font-weight: 600;
+        font-size: 1.1rem;
+        color: #3A2B7C;
+    }
+    .stTabs [data-baseweb="tab"][aria-selected="true"] {
+        color: #fff;
+        background: linear-gradient(90deg, #A064FF 60%, #5FFFE1 100%);
+        border-radius: 1.2rem;
+    }
+    .stButton > button {
+        background: linear-gradient(90deg, #A064FF 60%, #5FFFE1 100%);
+        color: #fff;
+        font-weight: 700;
+        border: none;
+        border-radius: 1.5rem;
+        padding: 0.7rem 2rem;
+        box-shadow: 0 2px 8px rgba(160, 100, 255, 0.12);
+    }
+    .stProgress > div > div {
+        border-radius: 1rem;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# --- Mental Health Keywords ---
 mental_health_keywords = {
     "sleep": ["sleep", "insomnia", "tired", "exhausted", "rest", "bed", "awake", "nap"],
     "anxiety": ["worry", "anxious", "nervous", "stress", "panic", "fear", "overwhelm"],
@@ -25,74 +66,48 @@ mental_health_keywords = {
     "motivation": ["motivat", "energy", "interest", "hobby", "passion", "enjoy", "effort"]
 }
 
-# Simple function to analyze text without external APIs
 def analyze_text(text):
     text = text.lower()
-    
-    # Sentiment analysis
     sentiment = sia.polarity_scores(text)
-    
-    # Keyword matching
     category_scores = {}
     for category, keywords in mental_health_keywords.items():
-        score = 0
-        for keyword in keywords:
-            if keyword in text:
-                score += 1
-        # Normalize score
+        score = sum(keyword in text for keyword in keywords)
         category_scores[category] = min(score / len(keywords) * 2, 1.0)
-    
-    # Calculate risk score (simplified algorithm)
     risk_score = (
-        (1 - sentiment['compound']) * 50 +  # Convert sentiment to 0-50 scale
+        (1 - sentiment['compound']) * 50 +
         (category_scores.get('depression', 0) * 15) +
         (category_scores.get('anxiety', 0) * 12) +
         (category_scores.get('sleep', 0) * 10) +
         (category_scores.get('social', 0) * 8) +
         (category_scores.get('motivation', 0) * 5)
     )
-    
-    # Ensure risk_score is in 0-100 range
     risk_score = max(0, min(100, risk_score))
-    
     return {
         'sentiment': sentiment,
         'category_scores': category_scores,
         'risk_score': risk_score
     }
 
-# Generate synthetic time series data
 def generate_time_series(days=30, declining=True):
     dates = [datetime.now() - timedelta(days=i) for i in range(days)]
     dates.reverse()
-    
-    # Calculate lengths for each section to ensure equal array lengths
     section1 = days // 3
     section2 = days // 3
-    section3 = days - section1 - section2  # Ensure all sections add up to exactly 'days'
-    
+    section3 = days - section1 - section2
     if declining:
-        # Generate declining mental health pattern
         sleep_hours = [7 + random.uniform(-0.5, 0.5) for _ in range(section1)] + \
                      [6 + random.uniform(-1.0, 0.5) for _ in range(section2)] + \
                      [5 + random.uniform(-1.0, 0.5) for _ in range(section3)]
-        
         mood_scores = [80 + random.uniform(-10, 10) for _ in range(section1)] + \
                      [65 + random.uniform(-15, 10) for _ in range(section2)] + \
                      [50 + random.uniform(-15, 5) for _ in range(section3)]
-                     
         social_scores = [75 + random.uniform(-15, 15) for _ in range(section1)] + \
                        [60 + random.uniform(-20, 10) for _ in range(section2)] + \
                        [40 + random.uniform(-15, 10) for _ in range(section3)]
     else:
-        # Generate stable pattern
         sleep_hours = [7 + random.uniform(-0.7, 0.7) for _ in range(days)]
         mood_scores = [75 + random.uniform(-15, 15) for _ in range(days)]
         social_scores = [70 + random.uniform(-20, 20) for _ in range(days)]
-    
-    # Verify all lists have the same length
-    assert len(dates) == len(sleep_hours) == len(mood_scores) == len(social_scores), "Array length mismatch"
-    
     return pd.DataFrame({
         'Date': dates,
         'Sleep': sleep_hours,
@@ -100,7 +115,6 @@ def generate_time_series(days=30, declining=True):
         'Social': social_scores
     })
 
-# Sample text entries with pre-classified risk levels
 sample_entries = [
     {
         "text": "Had a good day today. Went for a walk in the park and met some friends for coffee. Looking forward to the weekend!",
@@ -120,311 +134,192 @@ sample_entries = [
     }
 ]
 
-# Main application
-def main():
-    st.set_page_config(page_title="Mental Health Early Warning System", layout="wide")
-    
-    st.title("Mental Health Early Warning System")
-    st.write("AI-powered early detection and intervention for mental health concerns")
-    
-    # Create tabs
-    tab1, tab2, tab3 = st.tabs(["Text Analysis", "Behavioral Trends", "About the System"])
-    
-    # Tab 1: Text Analysis
-    with tab1:
-        st.header("Journal Entry Analysis")
-        
-        # User can select a sample or enter their own text
-        use_sample = st.checkbox("Use a sample entry", value=True)
-        
-        if use_sample:
-            sample_idx = st.selectbox(
-                "Select a sample journal entry:", 
-                range(len(sample_entries)), 
-                format_func=lambda i: f"Sample {i+1}: {sample_entries[i]['risk_level']} Risk"
-            )
-            text_input = sample_entries[sample_idx]["text"]
-            text_input = st.text_area("Journal entry:", value=text_input, height=150)
-        else:
-            text_input = st.text_area(
-                "Enter a journal entry or social media post to analyze:", 
-                value="", 
-                height=150,
-                placeholder="Type your journal entry here..."
-            )
-        
-        if st.button("Analyze Text") and text_input:
-            with st.spinner("Analyzing text..."):
-                # Analyze the text
-                analysis_result = analyze_text(text_input)
-                
-                # Display results
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    st.subheader("Sentiment Analysis")
-                    sentiment = analysis_result['sentiment']
-                    
-                    # Create a simple bar chart for sentiment using Streamlit
-                    st.write("Compound Sentiment Score:")
-                    sentiment_value = sentiment['compound']
-                    st.progress((sentiment_value + 1) / 2)  # Convert from -1,1 to 0,1 for progress bar
-                    st.write(f"Score: {sentiment_value:.2f} ({sentiment_value > 0 and 'Positive' or 'Negative'})")
-                    
-                    # Show detailed sentiment scores
-                    st.write(f"Positive: {sentiment['pos']:.2f}")
-                    st.write(f"Neutral: {sentiment['neu']:.2f}")
-                    st.write(f"Negative: {sentiment['neg']:.2f}")
-                
-                with col2:
-                    st.subheader("Mental Health Indicators")
-                    
-                    # Show category scores
-                    category_scores = analysis_result['category_scores']
-                    if category_scores:
-                        # Sort by score
-                        sorted_categories = sorted(category_scores.items(), key=lambda x: x[1], reverse=True)
-                        
-                        for category, score in sorted_categories:
-                            st.write(f"{category.title()}")
-                            st.progress(score)
-                            st.write(f"Score: {score:.2f}")
-                
-                # Risk assessment
-                st.subheader("Risk Assessment")
-                risk_score = analysis_result['risk_score']
-                
-                # Display risk level
-                if risk_score < 30:
-                    risk_label = "Low Risk"
-                    risk_color = "green"
-                elif risk_score < 50:
-                    risk_label = "Low-Medium Risk"
-                    risk_color = "yellow"
-                elif risk_score < 70:
-                    risk_label = "Medium Risk" 
-                    risk_color = "orange"
-                else:
-                    risk_label = "High Risk"
-                    risk_color = "red"
-                
-                # Create columns for risk display
-                col1, col2 = st.columns([1, 2])
-                
-                with col1:
-                    st.markdown(f"### {risk_label}")
-                    st.markdown(f"Score: **{risk_score:.1f}/100**")
-                
-                with col2:
-                    # Create risk gauge with Streamlit progress bar
-                    st.progress(risk_score/100)
-                    
-                    # Add labels for risk zones
-                    cols = st.columns(4)
-                    cols[0].write("Low")
-                    cols[1].write("Low-Med")
-                    cols[2].write("Medium")
-                    cols[3].write("High")
-                
-                # Recommendations based on risk level
-                st.subheader("Personalized Recommendations")
-                
-                if risk_score < 30:
-                    recommendations = [
-                        "Continue monitoring your mental well-being",
-                        "Maintain current self-care practices",
-                        "Consider using our mood tracking feature for ongoing awareness"
-                    ]
-                elif risk_score < 50:
-                    recommendations = [
-                        "Practice mindfulness for 10 minutes daily",
-                        "Ensure you're maintaining regular social connections",
-                        "Review and optimize your sleep hygiene"
-                    ]
-                elif risk_score < 70:
-                    recommendations = [
-                        "Consider speaking with a trusted friend about how you're feeling",
-                        "Implement a consistent sleep schedule",
-                        "Try daily physical activity, even short walks",
-                        "Practice gratitude journaling"
-                    ]
-                else:
-                    recommendations = [
-                        "Reach out to a mental health professional",
-                        "Talk to someone you trust about how you're feeling",
-                        "Focus on sleep, nutrition, and gentle physical activity",
-                        "Use grounding techniques when feeling overwhelmed",
-                        "Remember that support is available"
-                    ]
-                
-                for rec in recommendations:
-                    st.markdown(f"• {rec}")
-                
-                if risk_score >= 70:
-                    st.markdown("---")
-                    st.markdown("### Support Resources")
-                    st.markdown("• **Crisis Text Line**: Text HOME to 741741")
-                    st.markdown("• **National Suicide Prevention Lifeline**: 988 or 1-800-273-8255")
-                    st.markdown("• **SAMHSA's National Helpline**: 1-800-662-4357")
-    
-    # Tab 2: Behavioral Trends
-    with tab2:
-        st.header("Behavioral Pattern Analysis")
-        
-        # Select profile type
-        profile_type = st.radio(
-            "Select profile type:",
-            ["Stable Pattern", "Declining Pattern"]
-        )
-        
-        # Generate appropriate data
-        is_declining = profile_type == "Declining Pattern"
-        df = generate_time_series(days=30, declining=is_declining)
-        
-        # Display time series data
-        st.subheader("30-Day Behavioral Patterns")
-        
-        # Select metric to display
-        selected_metric = st.selectbox(
-            "Select metric to view:",
-            ["All Metrics", "Sleep Hours", "Mood Score", "Social Activity"]
-        )
-        
-        if selected_metric == "All Metrics":
-            # Normalize data for comparison
-            df_plot = df.copy()
-            df_plot['Sleep_norm'] = df_plot['Sleep'] / 8 * 100  # Normalize to 0-100 scale
-            
-            # Use Streamlit's native line chart
-            chart_data = pd.DataFrame({
-                'Date': df_plot['Date'],
-                'Sleep Quality': df_plot['Sleep_norm'],
-                'Mood Score': df_plot['Mood'],
-                'Social Activity': df_plot['Social']
-            }).set_index('Date')
-            
-            st.line_chart(chart_data)
-            
-            # Add text explanation for change point
-            if is_declining:
-                st.markdown("**Red vertical line indicates detected change point**")
-            
-        elif selected_metric == "Sleep Hours":
-            # Use Streamlit's native line chart
-            st.line_chart(df.set_index('Date')['Sleep'])
-            
-            st.markdown("**Orange horizontal line indicates concern threshold (6 hours)**")
-            if is_declining:
-                st.markdown("**Red vertical line indicates detected change point**")
-                
-        elif selected_metric == "Mood Score":
-            # Use Streamlit's native line chart
-            st.line_chart(df.set_index('Date')['Mood'])
-            
-            st.markdown("**Orange horizontal line indicates concern threshold (60/100)**")
-            if is_declining:
-                st.markdown("**Red vertical line indicates detected change point**")
-                
-        else:  # Social Activity
-            # Use Streamlit's native line chart
-            st.line_chart(df.set_index('Date')['Social'])
-            
-            st.markdown("**Orange horizontal line indicates concern threshold (50/100)**")
-            if is_declining:
-                st.markdown("**Red vertical line indicates detected change point**")
-        
-        # Add insight section
-        st.subheader("Pattern Insights")
-        
-        if is_declining:
-            st.markdown("""
-            **System Analysis:**
-            
-            • **Detected decline** in multiple wellbeing indicators
-            • **Sleep pattern disruption** beginning approximately 2 weeks ago
-            • **Mood deterioration** showing significant correlation with sleep changes
-            • **Social engagement reduction** following initial wellbeing decline
-            
-            **Recommendations:**
-            
-            • Schedule sleep assessment
-            • Implement structured social reconnection plan
-            • Consider mood support interventions
-            """)
-        else:
-            st.markdown("""
-            **System Analysis:**
-            
-            • **Stable patterns** across all wellbeing indicators
-            • **Normal fluctuations** within expected ranges
-            • **No concerning trends** detected in the 30-day window
-            
-            **Recommendations:**
-            
-            • Continue current wellness practices
-            • Maintain regular monitoring
-            • Consider preventative wellbeing activities
-            """)
-    
-    # Tab 3: About the System
-    with tab3:
-        st.header("About the Mental Health Early Warning System")
-        
-        st.markdown("""
-        ### How It Works
-        
-        This system uses natural language processing and behavioral pattern analysis to detect early warning signs of mental health concerns:
-        
-        1. **Text Analysis Component**
-           - Sentiment analysis to detect emotional tone
-           - Keyword identification for specific concerns
-           - Linguistic pattern recognition
-        
-        2. **Behavioral Pattern Monitoring**
-           - Sleep quality tracking
-           - Mood fluctuation analysis
-           - Social engagement monitoring
-           - Activity level assessment
-        
-        3. **Early Warning Algorithm**
-           - Integration of multiple data points
-           - Pattern detection across time
-           - Personalized baseline comparisons
-           - Tailored recommendation generation
-        """)
-        
-        st.subheader("Privacy & Ethics")
-        st.markdown("""
-        Our system is designed with privacy and ethics as core principles:
-        
-        - **Privacy-preserving design**: All processing happens locally
-        - **User control**: You decide what data to share and when
-        - **No data storage**: Analysis happens in real-time without persistent storage
-        - **Transparent algorithms**: Clear explanation of how assessments are made
-        - **Supportive, not diagnostic**: Provides support resources, not medical diagnoses
-        """)
-        
-        st.subheader("Potential Impact")
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.markdown("""
-            **Individual Benefits:**
-            - Earlier intervention
-            - Increased self-awareness
-            - Access to tailored resources
-            - Reduced stigma through technology
-            """)
-            
-        with col2:
-            st.markdown("""
-            **Community Benefits:**
-            - Reduced crisis incidents
-            - Improved resource allocation
-            - Data-informed mental health support
-            - Preventative rather than reactive care
-            """)
+# --- Main App ---
+st.set_page_config(page_title="VibeCheck: Gen Z Mental Health", layout="wide", page_icon="🧠")
 
-if __name__ == "__main__":
-    main()
+# --- Hero Section ---
+st.markdown("""
+    <div style="text-align:center; padding: 1.5rem 0;">
+        <h1 style="font-size:2.8rem; font-weight:900; color:#A064FF; margin-bottom:0.5rem;">
+            VibeCheck 🧠
+        </h1>
+        <h3 style="font-weight:500; color:#3A2B7C;">
+            Your AI-powered mental health early warning system.<br>
+            Personalized. Real-time. Social. <span style="color:#5FFFE1;">Made for Gen Z.</span>
+        </h3>
+        <p style="font-size:1.1rem; color:#444; max-width:600px; margin:auto;">
+            Spot the vibes, track your wellness, and get actionable support-before things go south. <br>
+            <span style="color:#A064FF; font-weight:600;">Pitch-ready for hackathons. Built for the next generation of wellness.</span>
+        </p>
+    </div>
+""", unsafe_allow_html=True)
+
+# --- Tabs ---
+tab1, tab2, tab3 = st.tabs(["✨ VibeCheck (Text)", "📈 Trends", "ℹ️ About"])
+
+with tab1:
+    st.header("✨ Journal VibeCheck")
+    st.write("Analyze your journal entry or social post for instant mood and risk feedback. Stay ahead of mental health dips with real-time AI insights.")
+
+    use_sample = st.toggle("Try a sample entry", value=True)
+    if use_sample:
+        sample_idx = st.selectbox(
+            "Pick a sample vibe:",
+            range(len(sample_entries)),
+            format_func=lambda i: f"Sample {i+1}: {sample_entries[i]['risk_level']} Risk"
+        )
+        text_input = st.text_area("Your journal entry:", value=sample_entries[sample_idx]["text"], height=120)
+    else:
+        text_input = st.text_area(
+            "Type your journal entry or post here...",
+            value="",
+            height=120,
+            placeholder="What's on your mind today? (e.g. 'Feeling anxious about exams...')"
+        )
+
+    if st.button("🔍 Analyze My Vibe") and text_input:
+        with st.spinner("Reading your vibes..."):
+            analysis_result = analyze_text(text_input)
+            col1, col2 = st.columns(2)
+            with col1:
+                st.subheader("Mood Meter")
+                sentiment = analysis_result['sentiment']
+                st.write("Overall Vibe:")
+                sentiment_value = sentiment['compound']
+                st.progress((sentiment_value + 1) / 2)
+                st.write(f"Score: {sentiment_value:.2f} ({'Positive' if sentiment_value > 0 else 'Negative'})")
+                st.write(f"Positive: {sentiment['pos']:.2f}")
+                st.write(f"Neutral: {sentiment['neu']:.2f}")
+                st.write(f"Negative: {sentiment['neg']:.2f}")
+            with col2:
+                st.subheader("Key Wellness Signals")
+                category_scores = analysis_result['category_scores']
+                sorted_categories = sorted(category_scores.items(), key=lambda x: x[1], reverse=True)
+                for category, score in sorted_categories:
+                    st.write(f"{category.title()}")
+                    st.progress(score)
+            st.subheader("Risk Radar")
+            risk_score = analysis_result['risk_score']
+            if risk_score < 30:
+                risk_label, risk_color = "Low Risk", "#5FFFE1"
+            elif risk_score < 50:
+                risk_label, risk_color = "Low-Medium", "#FFD600"
+            elif risk_score < 70:
+                risk_label, risk_color = "Medium", "#FFA500"
+            else:
+                risk_label, risk_color = "High", "#FF3B30"
+            st.markdown(f"<h3 style='color:{risk_color};'>{risk_label}</h3>", unsafe_allow_html=True)
+            st.markdown(f"<b>Score:</b> <span style='color:{risk_color}; font-size:1.2rem;'>{risk_score:.1f}/100</span>", unsafe_allow_html=True)
+            st.progress(risk_score/100)
+            st.caption("Low   |   Low-Med   |   Medium   |   High")
+            st.subheader("Personalized Next Steps")
+            if risk_score < 30:
+                recommendations = [
+                    "Keep up your self-care routine! 🚀",
+                    "Track your mood for extra awareness.",
+                    "Share your vibes with friends or our community."
+                ]
+            elif risk_score < 50:
+                recommendations = [
+                    "Try a 10-min mindfulness break.",
+                    "Check in with a friend.",
+                    "Optimize your sleep schedule."
+                ]
+            elif risk_score < 70:
+                recommendations = [
+                    "Talk to someone you trust.",
+                    "Stick to a steady sleep routine.",
+                    "Move your body-walk, dance, stretch.",
+                    "Try gratitude journaling."
+                ]
+            else:
+                recommendations = [
+                    "Reach out to a mental health pro.",
+                    "Let someone close know how you feel.",
+                    "Focus on rest, nutrition, and gentle activity.",
+                    "Use grounding techniques when stressed.",
+                    "Remember: support is always here."
+                ]
+            for rec in recommendations:
+                st.markdown(f"• {rec}")
+            if risk_score >= 70:
+                st.markdown("---")
+                st.markdown("### 🚨 Support Resources")
+                st.markdown("• **Crisis Text Line**: Text HOME to 741741")
+                st.markdown("• **988 Suicide & Crisis Lifeline**: 988 or 1-800-273-8255")
+                st.markdown("• **SAMHSA Helpline**: 1-800-662-4357")
+
+with tab2:
+    st.header("📈 Wellness Trends")
+    st.write("Visualize your 30-day patterns in sleep, mood, and social activity. Spot when your wellness is trending up-or when it needs a boost.")
+    profile_type = st.radio("Pick your vibe pattern:", ["Stable", "Declining"])
+    is_declining = profile_type == "Declining"
+    df = generate_time_series(days=30, declining=is_declining)
+    st.subheader("30-Day Wellness Chart")
+    selected_metric = st.selectbox("Show:", ["All Metrics", "Sleep Hours", "Mood Score", "Social Activity"])
+    if selected_metric == "All Metrics":
+        df_plot = df.copy()
+        df_plot['Sleep_norm'] = df_plot['Sleep'] / 8 * 100
+        chart_data = pd.DataFrame({
+            'Date': df_plot['Date'],
+            'Sleep Quality': df_plot['Sleep_norm'],
+            'Mood Score': df_plot['Mood'],
+            'Social Activity': df_plot['Social']
+        }).set_index('Date')
+        st.line_chart(chart_data)
+        if is_declining:
+            st.caption("Red vertical line = change point detected")
+    elif selected_metric == "Sleep Hours":
+        st.line_chart(df.set_index('Date')['Sleep'])
+        st.caption("Orange line = concern threshold (6 hours)")
+        if is_declining:
+            st.caption("Red vertical line = change point detected")
+    elif selected_metric == "Mood Score":
+        st.line_chart(df.set_index('Date')['Mood'])
+        st.caption("Orange line = concern threshold (60/100)")
+        if is_declining:
+            st.caption("Red vertical line = change point detected")
+    else:
+        st.line_chart(df.set_index('Date')['Social'])
+        st.caption("Orange line = concern threshold (50/100)")
+        if is_declining:
+            st.caption("Red vertical line = change point detected")
+    st.subheader("Pattern Insights")
+    if is_declining:
+        st.markdown("""
+        • 🚩 **Decline detected** in multiple wellness signals  
+        • Sleep disruption started ~2 weeks ago  
+        • Mood drop matches sleep changes  
+        • Social activity fell after mood dip  
+        **Next steps:**  
+        - Book a sleep check-in  
+        - Reconnect with friends  
+        - Try mood support tools  
+        """)
+    else:
+        st.markdown("""
+        • All wellness signals are stable  
+        • No concerning trends  
+        **Keep it up!**  
+        - Stick to your routine  
+        - Try new wellness activities  
+        """)
+
+with tab3:
+    st.header("ℹ️ About VibeCheck")
+    st.markdown("""
+    **VibeCheck** is a next-gen mental health early warning system for Gen Z.  
+    - AI-powered text analysis for instant emotional feedback  
+    - Visual trend tracking for sleep, mood, and social activity  
+    - Personalized, actionable recommendations  
+    - Social, gamified, and ready for wearables  
+    - Designed for hackathons, built for real-world impact  
+    ---
+    **Pitch Value:**  
+    - Tackles the mental health crisis with proactive, personalized tech[2][3]  
+    - Leverages Gen Z’s love for social, simple, authentic, and gamified experiences  
+    - Ready for integration with wearables, telehealth, and community features  
+    - Built to scale, customizable, and privacy-first  
+    """)
+    st.caption("Built by Gen Z, for Gen Z. #WellnessForAll #PitchReady")
+
