@@ -1,101 +1,54 @@
 import streamlit as st
+import numpy as np
 import pandas as pd
-from datetime import datetime, timedelta
 
-# Set page config FIRST
-st.set_page_config(page_title="LevelHead: Minimal Mental Health", layout="centered", page_icon="⬛️")
+st.set_page_config(page_title="BlackBox: Mood Tracing", layout="centered", page_icon="⬛️")
 
-# Custom CSS for minimal black & white look
+# Minimal black & white CSS
 st.markdown("""
     <style>
-    html, body, .stApp {
-        background: #fff !important;
-        color: #111 !important;
-        font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
-    }
-    .stButton > button {
-        background: #111 !important;
-        color: #fff !important;
-        border-radius: 4px;
-        border: none;
-        font-weight: 600;
-        padding: 0.5rem 1.5rem;
-    }
-    .stProgress > div > div {
-        background: #111 !important;
-    }
-    hr {border: 1px solid #eee;}
+    html, body, .stApp { background: #fff !important; color: #111 !important; font-family: 'Inter', Arial, sans-serif; }
+    .stButton > button { background: #111 !important; color: #fff !important; border-radius: 4px; border: none; font-weight: 600; }
+    .stProgress > div > div { background: #111 !important; }
+    .block-container { padding-top: 2rem; }
     </style>
 """, unsafe_allow_html=True)
 
-# --- Problem Statement ---
-st.title("LevelHead ⬛️")
-st.caption("Minimal. Gameful. Mental Health.")
+st.title("⬛️ BlackBox")
+st.caption("Passive mood tracing. No words needed.")
 
-with st.expander("📝 Problem & Solution (Pitch-Ready)"):
+with st.expander("What is BlackBox?"):
     st.markdown("""
-    **Problem:**  
-    Mental health issues often go undetected until they become critical. Most digital tools are either overwhelming or too clinical for daily engagement.
-
-    **Solution:**  
-    **LevelHead** makes self-care simple, stigma-free, and engaging. Track your mood, complete daily micro-challenges, and earn streaks-all in a minimal, black-and-white interface.
+    - **No journaling, no mood sliders, no chaos.**
+    - Detects mental health drift using only behavioral signals (typing rhythm, app switching, device usage).
+    - **No content ever leaves your device.**
+    - Shows a single, private “BlackBox Signal” waveform.
+    - If your signal drifts, it’s time to check in with yourself.
     """)
 
 st.markdown("---")
 
-# --- Gamified Daily Check-in ---
-st.header("🎯 Daily Check-in")
-today = datetime.now().date()
-mood = st.slider("How do you feel today?", 0, 10, 5, format="%d")
-if 'checkins' not in st.session_state:
-    st.session_state['checkins'] = {}
-if st.button("Submit Check-in"):
-    st.session_state['checkins'][str(today)] = mood
-    st.success("Check-in recorded!")
+# Simulate a behavioral signal drift (for demo)
+np.random.seed(42)
+N = 60
+signal = np.cumsum(np.random.randn(N) * 0.3)
+# Insert a "drift" event
+drift_point = 40
+signal[drift_point:] += np.linspace(0, -8, N-drift_point)
 
-# --- Streaks & Progress ---
-checkins = st.session_state['checkins']
-dates = [datetime.strptime(d, "%Y-%m-%d").date() for d in checkins.keys()]
-dates.sort()
-streak = 1
-for i in range(len(dates)-1, 0, -1):
-    if (dates[i] - dates[i-1]).days == 1:
-        streak += 1
+df = pd.DataFrame({'Time': range(N), 'BlackBox Signal': signal})
+
+if st.button("Check My BlackBox"):
+    st.line_chart(df.set_index('Time'), use_container_width=True)
+    drift_value = signal[-1] - signal[0]
+    if drift_value < -5:
+        st.markdown("### ⚠️ Drift Detected")
+        st.write("Your recent digital patterns suggest a significant change in your mood or energy.")
+        st.write("This is a private signal. If you want, take a moment to reflect or reach out to someone you trust.")
     else:
-        break
-
-st.markdown(f"**Current Streak:** `{streak}` days")
-if streak and streak % 7 == 0:
-    st.balloons()
-    st.success("🏆 7-Day Streak! Badge Unlocked.")
-
-# --- Micro-Challenge ---
-st.header("🕹️ Micro-Challenge")
-challenges = [
-    "Take a 5-minute mindful break",
-    "Send a positive message to a friend",
-    "Go for a short walk",
-    "Write down one thing you're grateful for",
-    "Drink a glass of water mindfully"
-]
-challenge_idx = (today.day + streak) % len(challenges)
-st.markdown(f"**Today's Challenge:** {challenges[challenge_idx]}")
-
-if st.button("Mark Challenge as Done"):
-    st.success("Challenge completed! +1 XP")
-
-# --- Mood History (Minimal Chart) ---
-if checkins:
-    st.header("📈 Mood History")
-    df = pd.DataFrame(list(checkins.items()), columns=['Date', 'Mood'])
-    df['Date'] = pd.to_datetime(df['Date'])
-    df = df.sort_values('Date')
-    st.line_chart(df.set_index('Date')['Mood'])
-else:
-    st.info("No check-ins yet. Start today to build your streak!")
+        st.markdown("### ✔️ All Clear")
+        st.write("Your BlackBox signal is stable. Keep going.")
 
 st.markdown("---")
-
-# --- Footer ---
-st.caption("LevelHead ⬛️ – Less chaos. More clarity. Built for hackathons and everyday life.")
+st.caption("BlackBox ⬛️ – For when you can't put it into words.")
 
