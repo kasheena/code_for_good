@@ -198,25 +198,26 @@ h1, h2, h3, h4, h5, h6 {
 
 # Main application
 def main():
-    st.set_page_config(page_title="Mental Health Early Warning System", layout="wide")
+    st.set_page_config(page_title="Bloom: Your Mental Wellness Companion 🌸", layout="wide") # Added flower to title
     st.markdown(f"<style>{custom_css}</style>", unsafe_allow_html=True)
 
     # Add a title image
     # img = Image.open("your_image.png")  # Replace with your image file
     # st.image(img, width=100)
 
-    st.title("Mental Health Early Warning System")
-    st.markdown("AI-powered early detection and intervention for mental health concerns")
+    st.title("Bloom: Your Mental Wellness Companion 🌸") # Added flower
+    st.markdown("Nurturing your mind, one leaf at a time. 🌱") # Added plant metaphor
 
     # Create tabs
-    tab1, tab2, tab3 = st.tabs(["Text Analysis", "Behavioral Trends", "About"])
+    tab1, tab2, tab3 = st.tabs(["Journal Patch 📝", "Growth Chart 📈", "About the Garden ℹ️"]) # Changed tab names
 
     # Tab 1: Text Analysis
     with tab1:
         st.header("Journal Entry Analysis")
+        st.markdown("Share your thoughts and we'll help you see the subtle shifts in your inner garden. 🌿") # Added intro text
 
         # Use a checkbox for sample selection
-        use_sample = st.checkbox("Use a sample journal entry", value=True) # Default to checked
+        use_sample = st.checkbox("Use a sample journal entry", value=True)
 
         if use_sample:
             sample_idx = st.selectbox(
@@ -247,94 +248,94 @@ def main():
                     st.subheader("Sentiment Analysis")
                     sentiment = analysis_result['sentiment']
 
-                    st.markdown("**Compound Sentiment Score:**")
+                    st.markdown("**Overall Vibe:**") # Changed from Compound Sentiment Score
                     sentiment_value = sentiment['compound']
-                    st.progress((sentiment_value + 1) / 2)  # Convert from -1,1 to 0,1 for progress bar
-                    st.markdown(f"Score: **{sentiment_value:.2f}** ({'Positive' if sentiment_value > 0 else 'Negative'})")
+                    st.progress((sentiment_value + 1) / 2)
+                    st.markdown(f"Feeling: **{'Positive ☀️' if sentiment_value > 0 else 'Negative 🌧️'}** (Score: {sentiment_value:.2f})") # Added emojis
 
                     # Use expander for detailed scores
-                    with st.expander("Detailed Sentiment Scores"):
+                    with st.expander("Show Detailed Vibe Breakdown"): # Changed title
                         st.markdown(f"- Positive: **{sentiment['pos']:.2f}**")
                         st.markdown(f"- Neutral: **{sentiment['neu']:.2f}**")
                         st.markdown(f"- Negative: **{sentiment['neg']:.2f}**")
 
                 with col2:
-                    st.subheader("Mental Health Indicators")
+                    st.subheader("Inner Garden Indicators") # Changed from Mental Health Indicators
 
                     # Show category scores
                     category_scores = analysis_result['category_scores']
                     if category_scores:
                         sorted_categories = sorted(category_scores.items(), key=lambda x: x[1], reverse=True)
                         for category, score in sorted_categories:
-                            st.markdown(f"**{category.title()}**")
+                            st.markdown(f"**{category.title()} Level:**") # Added level
                             st.progress(score)
                             st.markdown(f"Score: **{score:.2f}**")
 
                 # Risk assessment
-                st.subheader("Risk Assessment")
+                st.subheader("Wellbeing Assessment") # Changed from Risk Assessment
                 risk_score = analysis_result['risk_score']
 
                 # Display risk level
                 if risk_score < 30:
-                    risk_label = "Low Risk"
-                    risk_color = "green"
+                    wellbeing_level = "Thriving 🌱" # Changed from risk_label
+                    color = "green"
                 elif risk_score < 50:
-                    risk_label = "Low-Medium Risk"
-                    risk_color = "yellow"
+                    wellbeing_level = "Growing Steadily 🌿"
+                    color = "yellow"
                 elif risk_score < 70:
-                    risk_label = "Medium Risk"
-                    risk_color = "orange"
+                    wellbeing_level = "Needs Some Tending 🍂"
+                    color = "orange"
                 else:
-                    risk_label = "High Risk"
-                    risk_color = "red"
+                    wellbeing_level = "In Need of Care 🥀"
+                    color = "red"
 
                 col_risk1, col_risk2 = st.columns([1, 2])
 
                 with col_risk1:
-                    st.markdown(f"<h3 style='color: {risk_color};'>{risk_label}</h3>", unsafe_allow_html=True)
-                    st.markdown(f"Score: **{risk_score:.1f}/100**")
+                    st.markdown(f"<h3 style='color: {color};'>{wellbeing_level}</h3>", unsafe_allow_html=True) # Changed to wellbeing_level
+                    st.markdown(f"Wellbeing Score: **{risk_score:.1f}/100**") # Changed from Risk Score
 
                 with col_risk2:
                     st.progress(risk_score / 100)
                     cols_labels = st.columns(4)
-                    cols_labels[0].markdown("<p style='text-align: left;'>Low</p>", unsafe_allow_html=True)
-                    cols_labels[1].markdown("<p style='text-align: center;'>Low-Med</p>", unsafe_allow_html=True)
-                    cols_labels[2].markdown("<p style='text-align: center;'>Medium</p>", unsafe_allow_html=True)
-                    cols_labels[3].markdown("<p style='text-align: right;'>High</p>", unsafe_allow_html=True)
+                    cols_labels[0].markdown("<p style='text-align: left;'>Thriving</p>", unsafe_allow_html=True)
+                    cols_labels[1].markdown("<p style='text-align: center;'>Growing</p>", unsafe_allow_html=True)
+                    cols_labels[2].markdown("<p style='text-align: center;'>Tending</p>", unsafe_allow_html=True)
+                    cols_labels[3].markdown("<p style='text-align: right;'>Care</p>", unsafe_allow_html=True) # Changed labels
 
                 # Recommendations based on risk level
-                st.subheader("Personalized Recommendations")
+                st.subheader("Tips for Nurturing Your Growth") # Changed from Personalized Recommendations
 
                 if risk_score < 30:
                     recommendations = [
-                        "Continue monitoring your mental well-being.",
-                        "Maintain current self-care practices.",
-                        "Consider using our mood tracking feature for ongoing awareness."
+                        "Continue to nurture your inner garden with self-care. ☀️",
+                        "Maintain your current practices for a thriving mind. 🧘‍♀️",
+                        "Use the Growth Chart to track your progress. 📈" # Changed to Growth Chart
                     ]
                 elif risk_score < 50:
                     recommendations = [
-                        "Practice mindfulness for 10 minutes daily.",
-                        "Ensure you're maintaining regular social connections.",
-                        "Review and optimize your sleep hygiene."
+                        "Practice daily mindfulness to help your roots grow stronger. 🧘",
+                        "Ensure you're getting enough 'sunlight' through social connection. ☀️", # Metaphor
+                        "Review your sleep habits to optimize your rest. 😴"
                     ]
                 elif risk_score < 70:
                     recommendations = [
-                        "Consider speaking with a trusted friend about how you're feeling.",
-                        "Implement a consistent sleep schedule.",
-                        "Try daily physical activity, even short walks.",
-                        "Practice gratitude journaling."
+                        "Consider sharing your feelings with a trusted friend. 🗣️",
+                        "Establish a consistent sleep schedule to regulate your inner rhythms. ⏰",
+                        "Try incorporating gentle physical activity into your day. 🚶‍♀️",
+                        "Cultivate gratitude by journaling about what you're thankful for. 🙏"
                     ]
                 else:
                     recommendations = [
-                        "**Reach out to a mental health professional.**",
-                        "Talk to someone you trust about how you're feeling.",
-                        "Focus on sleep, nutrition, and gentle physical activity.",
-                        "Use grounding techniques when feeling overwhelmed.",
-                        "**Remember that support is available.**"
+                        "**Reach out to a mental health professional for expert guidance. 🧑‍⚕️**",
+                        "Talk to someone you trust about what you're experiencing. 🗣️",
+                        "Prioritize sleep, healthy nutrition, and gentle movement. 🍎",
+                        "Use grounding techniques to stay present when feeling overwhelmed. 🧘‍♂️",
+                        "**Remember, support is available. 🌱**" # Added support statement
                     ]
 
                 # Use a bulleted list for recommendations
-                st.markdown("Here's what you can do:")
+                st.markdown("Here's what you can do to help your wellbeing flourish:") # Added intro
                 for rec in recommendations:
                     st.markdown(f"- {rec}")
 
@@ -347,20 +348,21 @@ def main():
 
     # Tab 2: Behavioral Trends
     with tab2:
-        st.header("Behavioral Pattern Analysis")
+        st.header("Your Growth Chart") # Changed from Behavioral Pattern Analysis
+        st.markdown("Track the patterns of your inner garden over the past 30 days. 📊")
 
         # Select profile type using a radio button
         profile_type = st.radio(
             "Select profile type:",
-            ["Stable Pattern", "Declining Pattern"]
+            ["Stable Growth 📈", "Declining Growth 📉"] # Changed labels
         )
 
         # Generate appropriate data
-        is_declining = profile_type == "Declining Pattern"
+        is_declining = profile_type == "Declining Growth 📉"
         df = generate_time_series(days=30, declining=is_declining)
 
         # Display time series data
-        st.subheader("30-Day Behavioral Patterns")
+        st.subheader("30-Day Growth Patterns") # Changed
 
         # Select metric to display using a selectbox
         selected_metric = st.selectbox(
@@ -377,20 +379,22 @@ def main():
             chart_data_melted = pd.melt(df_plot, id_vars=['Date'], value_vars=['Sleep_norm', 'Mood', 'Social'],
                                        var_name='Metric', value_name='Value')
 
-            chart = alt.Chart(chart_data_melted).mark_line(point=True).encode( # added point=True
+            chart = alt.Chart(chart_data_melted).mark_line(point=True).encode(
                 x=alt.X('Date:T', axis=alt.Axis(format="%Y-%m-%d")),
                 y=alt.Y('Value:Q', title=None),
                 color=alt.Color('Metric:N', title="Metric"),
                 tooltip=['Date:T', 'Metric:N', 'Value:Q']
             ).properties(
-                height=400, # Increased height for better visualization
+                height=400,
                 width="container"
             ).interactive()
             st.altair_chart(chart, use_container_width=True)
 
             # Add text explanation for change point
             if is_declining:
-                st.markdown("<p style='color: red;'>&#128680; Detected potential decline across multiple wellbeing indicators.</p>", unsafe_allow_html=True)
+                st.markdown("<p style='color: red;'>&#128680; Detected potential decline across multiple wellbeing indicators.</p>", unsafe_allow_html=True) #same
+            else:
+                st.markdown("<p style='color: green;'>&#128994; Your garden is showing stable growth across key areas. </p>", unsafe_allow_html=True)
 
         elif selected_metric == "Sleep Hours":
             chart = alt.Chart(df).mark_line(point=True).encode(
@@ -412,6 +416,8 @@ def main():
             st.markdown("<p style='color: orange;'>&#11044; Concern threshold (6 hours)</p>", unsafe_allow_html=True)
             if is_declining:
                 st.markdown("<p style='color: red;'>&#128680; Potential decline in sleep patterns detected.</p>", unsafe_allow_html=True)
+            else:
+                st.markdown("<p style='color: green;'>&#128994; Your sleep patterns are within a healthy range. </p>", unsafe_allow_html=True)
 
         elif selected_metric == "Mood Score":
             chart = alt.Chart(df).mark_line(point=True).encode(
@@ -432,6 +438,8 @@ def main():
             st.markdown("<p style='color: orange;'>&#11044; Concern threshold (60/100)</p>", unsafe_allow_html=True)
             if is_declining:
                 st.markdown("<p style='color: red;'>&#128680; Potential decline in mood scores detected.</p>", unsafe_allow_html=True)
+            else:
+                st.markdown("<p style='color: green;'>&#128994; Your mood is showing stable and positive levels. </p>", unsafe_allow_html=True)
 
         else:  # Social Activity
             chart = alt.Chart(df).mark_line(point=True).encode(
@@ -452,9 +460,11 @@ def main():
             st.markdown("<p style='color: orange;'>&#11044; Concern threshold (50/100)</p>", unsafe_allow_html=True)
             if is_declining:
                 st.markdown("<p style='color: red;'>&#128680; Potential decline in social activity detected.</p>", unsafe_allow_html=True)
+            else:
+                 st.markdown("<p style='color: green;'>&#128994;  Your social connections remain consistent. </p>", unsafe_allow_html=True)
 
         # Add insight section
-        st.subheader("Pattern Insights")
+        st.subheader("Growth Insights") # Changed
 
         if is_declining:
             st.markdown("""
@@ -488,7 +498,7 @@ def main():
 
     # Tab 3: About the System
     with tab3:
-        st.header("About the Mental Health Early Warning System")
+        st.header("About the Wellness Garden") # Changed from About the System
 
         st.markdown("""
         ### How It Works
