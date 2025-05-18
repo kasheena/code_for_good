@@ -7,6 +7,7 @@ import nltk
 from nltk.sentiment import SentimentIntensityAnalyzer
 import re
 import altair as alt
+from PIL import Image
 
 # Download necessary NLTK data (only needs to be done once)
 try:
@@ -200,6 +201,10 @@ def main():
     st.set_page_config(page_title="Mental Health Early Warning System", layout="wide")
     st.markdown(f"<style>{custom_css}</style>", unsafe_allow_html=True)
 
+    # Add a title image
+    # img = Image.open("your_image.png")  # Replace with your image file
+    # st.image(img, width=100)
+
     st.title("Mental Health Early Warning System")
     st.markdown("AI-powered early detection and intervention for mental health concerns")
 
@@ -210,8 +215,8 @@ def main():
     with tab1:
         st.header("Journal Entry Analysis")
 
-        # User can select a sample or enter their own text
-        use_sample = st.checkbox("Use a sample entry", value=True)
+        # Use a radio button for sample selection
+        use_sample = st.radio("Use a sample entry", [True, False], index=0)
 
         if use_sample:
             sample_idx = st.selectbox(
@@ -229,7 +234,8 @@ def main():
                 placeholder="Type your journal entry here..."
             )
 
-        if st.button("Analyze Text") and text_input:
+        # Add a button to trigger analysis
+        if st.button("Analyze Text"):
             with st.spinner("Analyzing text..."):
                 # Analyze the text
                 analysis_result = analyze_text(text_input)
@@ -246,10 +252,11 @@ def main():
                     st.progress((sentiment_value + 1) / 2)  # Convert from -1,1 to 0,1 for progress bar
                     st.markdown(f"Score: **{sentiment_value:.2f}** ({'Positive' if sentiment_value > 0 else 'Negative'})")
 
-                    st.markdown("Detailed Scores:")
-                    st.markdown(f"- Positive: **{sentiment['pos']:.2f}**")
-                    st.markdown(f"- Neutral: **{sentiment['neu']:.2f}**")
-                    st.markdown(f"- Negative: **{sentiment['neg']:.2f}**")
+                    # Use expander for detailed scores
+                    with st.expander("Detailed Sentiment Scores"):
+                        st.markdown(f"- Positive: **{sentiment['pos']:.2f}**")
+                        st.markdown(f"- Neutral: **{sentiment['neu']:.2f}**")
+                        st.markdown(f"- Negative: **{sentiment['neg']:.2f}**")
 
                 with col2:
                     st.subheader("Mental Health Indicators")
@@ -326,6 +333,12 @@ def main():
                         "**Remember that support is available.**"
                     ]
 
+                # Use a bulleted list for recommendations
+                st.markdown("
+
+**Here's what you can do:**
+
+")
                 for rec in recommendations:
                     st.markdown(f"- {rec}")
 
@@ -340,7 +353,7 @@ def main():
     with tab2:
         st.header("Behavioral Pattern Analysis")
 
-        # Select profile type
+        # Select profile type using a radio button
         profile_type = st.radio(
             "Select profile type:",
             ["Stable Pattern", "Declining Pattern"]
@@ -353,7 +366,7 @@ def main():
         # Display time series data
         st.subheader("30-Day Behavioral Patterns")
 
-        # Select metric to display
+        # Select metric to display using a selectbox
         selected_metric = st.selectbox(
             "Select metric to view:",
             ["All Metrics", "Sleep Hours", "Mood Score", "Social Activity"]
@@ -368,14 +381,15 @@ def main():
             chart_data_melted = pd.melt(df_plot, id_vars=['Date'], value_vars=['Sleep_norm', 'Mood', 'Social'],
                                        var_name='Metric', value_name='Value')
 
-            chart = alt.Chart(chart_data_melted).mark_line().encode(
+            chart = alt.Chart(chart_data_melted).mark_line(point=True).encode( # added point=True
                 x=alt.X('Date:T', axis=alt.Axis(format="%Y-%m-%d")),
                 y=alt.Y('Value:Q', title=None),
                 color=alt.Color('Metric:N', title="Metric"),
                 tooltip=['Date:T', 'Metric:N', 'Value:Q']
             ).properties(
-                height=300
-            )
+                height=400, # Increased height for better visualization
+                width="container"
+            ).interactive()
             st.altair_chart(chart, use_container_width=True)
 
             # Add text explanation for change point
@@ -383,13 +397,14 @@ def main():
                 st.markdown("<p style='color: red;'>&#128680; Detected potential decline across multiple wellbeing indicators.</p>", unsafe_allow_html=True)
 
         elif selected_metric == "Sleep Hours":
-            chart = alt.Chart(df).mark_line().encode(
+            chart = alt.Chart(df).mark_line(point=True).encode(
                 x=alt.X('Date:T', axis=alt.Axis(format="%Y-%m-%d")),
                 y=alt.Y('Sleep:Q', title="Hours"),
                 tooltip=['Date:T', 'Sleep:Q']
             ).properties(
-                height=300
-            )
+                height=400,
+                width="container"
+            ).interactive()
             # Add a horizontal line for the concern threshold (6 hours)
             threshold = alt.Chart(pd.DataFrame({'y': [6]})).mark_rule(color='orange').encode(
                 y=alt.Y('y'),
@@ -403,13 +418,14 @@ def main():
                 st.markdown("<p style='color: red;'>&#128680; Potential decline in sleep patterns detected.</p>", unsafe_allow_html=True)
 
         elif selected_metric == "Mood Score":
-            chart = alt.Chart(df).mark_line().encode(
+            chart = alt.Chart(df).mark_line(point=True).encode(
                 x=alt.X('Date:T', axis=alt.Axis(format="%Y-%m-%d")),
                 y=alt.Y('Mood:Q', title="Mood Score"),
                 tooltip=['Date:T', 'Mood:Q']
             ).properties(
-                height=300
-            )
+                height=400,
+                width="container"
+            ).interactive()
             # Add a horizontal line for the concern threshold (60/100)
             threshold = alt.Chart(pd.DataFrame({'y': [60]})).mark_rule(color='orange').encode(
                 y=alt.Y('y'),
@@ -422,13 +438,14 @@ def main():
                 st.markdown("<p style='color: red;'>&#128680; Potential decline in mood scores detected.</p>", unsafe_allow_html=True)
 
         else:  # Social Activity
-            chart = alt.Chart(df).mark_line().encode(
+            chart = alt.Chart(df).mark_line(point=True).encode(
                 x=alt.X('Date:T', axis=alt.Axis(format="%Y-%m-%d")),
                 y=alt.Y('Social:Q', title="Social Activity"),
                 tooltip=['Date:T', 'Social:Q']
             ).properties(
-                height=300
-            )
+                height=400,
+                width="container"
+            ).interactive()
             # Add a horizontal line for the concern threshold (50/100)
             threshold = alt.Chart(pd.DataFrame({'y': [50]})).mark_rule(color='orange').encode(
                 y=alt.Y('y'),
@@ -532,6 +549,15 @@ def main():
             - Data-informed mental health support
             - Preventative rather than reactive care
             """)
+        
+        # Add a feedback form
+        st.subheader("Feedback")
+        feedback = st.text_area("Share your thoughts on this app:", placeholder="Enter your feedback here...")
+        if st.button("Submit Feedback"):
+            if feedback:
+                st.success("Thank you for your feedback!")
+            else:
+                st.warning("Please enter some feedback before submitting.")
 
 if __name__ == "__main__":
     main()
