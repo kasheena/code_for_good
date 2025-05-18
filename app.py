@@ -334,11 +334,7 @@ def main():
                     ]
 
                 # Use a bulleted list for recommendations
-                st.markdown("
-
-**Here's what you can do:**
-
-")
+                st.markdown("Here's what you can do:")
                 for rec in recommendations:
                     st.markdown(f"- {rec}")
 
