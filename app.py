@@ -1,9 +1,11 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 from datetime import datetime, timedelta
 import random
 import nltk
 from nltk.sentiment import SentimentIntensityAnalyzer
+import re
 import altair as alt
 
 # Download necessary NLTK data (only needs to be done once)
@@ -15,13 +17,13 @@ except LookupError:
 # Initialize sentiment analyzer
 sia = SentimentIntensityAnalyzer()
 
-# Load a simple feel-good keyword dictionary
-feel_good_keywords = {
-    "sleep": ["sleep", "rest", "tired", "relaxed", "bed", "awake", "nap"],
-    "happiness": ["happy", "joyful", "cheerful", "good", "smile", "laugh", "fun"],
-    "calmness": ["calm", "peaceful", "relaxed", "serene", "quiet", "still", "tranquil"],
-    "connection": ["friend", "family", "people", "together", "social", "talk", "connect"],
-    "energy": ["energy", "active", "motivated", "lively", "enthusiastic", "passion", "enjoy"]
+# Load a simple mental health keyword dictionary
+mental_health_keywords = {
+    "sleep": ["sleep", "insomnia", "tired", "exhausted", "rest", "bed", "awake", "nap"],
+    "anxiety": ["worry", "anxious", "nervous", "stress", "panic", "fear", "overwhelm"],
+    "depression": ["sad", "depress", "empty", "hopeless", "worthless", "lonely", "numb"],
+    "social": ["friend", "family", "people", "alone", "isolat", "talk", "social"],
+    "motivation": ["motivat", "energy", "interest", "hobby", "passion", "enjoy", "effort"]
 }
 
 # Simple function to analyze text without external APIs
@@ -33,7 +35,7 @@ def analyze_text(text):
 
     # Keyword matching
     category_scores = {}
-    for category, keywords in feel_good_keywords.items():
+    for category, keywords in mental_health_keywords.items():
         score = 0
         for keyword in keywords:
             if keyword in text:
@@ -41,27 +43,27 @@ def analyze_text(text):
         # Normalize score
         category_scores[category] = min(score / len(keywords) * 2, 1.0)
 
-    # Calculate wellness score (simplified algorithm)
-    wellness_score = (
-        (sentiment['compound'] + 1) * 50 +  # Convert sentiment to 0-100 scale
-        (category_scores.get('happiness', 0) * 15) +
-        (category_scores.get('calmness', 0) * 12) +
+    # Calculate risk score (simplified algorithm)
+    risk_score = (
+        (1 - sentiment['compound']) * 50 +  # Convert sentiment to 0-50 scale
+        (category_scores.get('depression', 0) * 15) +
+        (category_scores.get('anxiety', 0) * 12) +
         (category_scores.get('sleep', 0) * 10) +
-        (category_scores.get('connection', 0) * 8) +
-        (category_scores.get('energy', 0) * 5)
+        (category_scores.get('social', 0) * 8) +
+        (category_scores.get('motivation', 0) * 5)
     )
 
-    # Ensure wellness_score is in 0-100 range
-    wellness_score = max(0, min(100, wellness_score))
+    # Ensure risk_score is in 0-100 range
+    risk_score = max(0, min(100, risk_score))
 
     return {
         'sentiment': sentiment,
         'category_scores': category_scores,
-        'wellness_score': wellness_score
+        'risk_score': risk_score
     }
 
 # Generate synthetic time series data
-def generate_time_series(days=30, improving=True):
+def generate_time_series(days=30, declining=True):
     dates = [datetime.now() - timedelta(days=i) for i in range(days)]
     dates.reverse()
 
@@ -70,22 +72,24 @@ def generate_time_series(days=30, improving=True):
     section2 = days // 3
     section3 = days - section1 - section2  # Ensure all sections add up to exactly 'days'
 
-    if improving:
-        # Generate improving wellbeing pattern
+    if declining:
+        # Generate declining mental health pattern
         sleep_hours = [7 + random.uniform(-0.5, 0.5) for _ in range(section1)] + \
-                      [7.5 + random.uniform(-0.5, 0.5) for _ in range(section2)] + \
-                      [8 + random.uniform(-0.5, 0.5) for _ in range(section3)]
-        mood_scores = [60 + random.uniform(-10, 10) for _ in range(section1)] + \
-                      [70 + random.uniform(-10, 10) for _ in range(section2)] + \
-                      [80 + random.uniform(-10, 10) for _ in range(section3)]
-        social_scores = [50 + random.uniform(-10, 10) for _ in range(section1)] + \
-                        [60 + random.uniform(-10, 10) for _ in range(section2)] + \
-                        [70 + random.uniform(-10, 10) for _ in range(section3)]
+                      [6 + random.uniform(-1.0, 0.5) for _ in range(section2)] + \
+                      [5 + random.uniform(-1.0, 0.5) for _ in range(section3)]
+
+        mood_scores = [80 + random.uniform(-10, 10) for _ in range(section1)] + \
+                      [65 + random.uniform(-15, 10) for _ in range(section2)] + \
+                      [50 + random.uniform(-15, 5) for _ in range(section3)]
+
+        social_scores = [75 + random.uniform(-15, 15) for _ in range(section1)] + \
+                        [60 + random.uniform(-20, 10) for _ in range(section2)] + \
+                        [40 + random.uniform(-15, 10) for _ in range(section3)]
     else:
         # Generate stable pattern
-        sleep_hours = [7.5 + random.uniform(-0.7, 0.7) for _ in range(days)]
-        mood_scores = [75 + random.uniform(-10, 10) for _ in range(days)]
-        social_scores = [60 + random.uniform(-10, 10) for _ in range(days)]
+        sleep_hours = [7 + random.uniform(-0.7, 0.7) for _ in range(days)]
+        mood_scores = [75 + random.uniform(-15, 15) for _ in range(days)]
+        social_scores = [70 + random.uniform(-20, 20) for _ in range(days)]
 
     # Verify all lists have the same length
     assert len(dates) == len(sleep_hours) == len(mood_scores) == len(social_scores), "Array length mismatch"
@@ -97,23 +101,23 @@ def generate_time_series(days=30, improving=True):
         'Social': social_scores
     })
 
-# Sample text entries with pre-classified wellness levels
+# Sample text entries with pre-classified risk levels
 sample_entries = [
     {
-        "text": "Feeling great today!  Had a good time with friends.",
-        "wellness_level": "Great"
+        "text": "Had a good day today. Went for a walk in the park and met some friends for coffee. Looking forward to the weekend!",
+        "risk_level": "Low"
     },
     {
-        "text": "A bit tired, but overall okay.  Relaxing at home.",
-        "wellness_level": "Okay"
+        "text": "Work was stressful today. Feeling a bit tired but nothing too bad. Might skip the gym tonight and just relax.",
+        "risk_level": "Low-Medium"
     },
     {
-        "text": "Not feeling myself.  Haven't been sleeping well and feeling down.",
-        "wellness_level": "Low"
+        "text": "Haven't been sleeping well lately. Work is fine but I just don't feel motivated anymore. Everything takes so much effort.",
+        "risk_level": "Medium"
     },
     {
-        "text": "Things are really tough.  I feel very sad and alone.",
-        "wellness_level": "Very Low"
+        "text": "I can't remember the last time I felt happy. Nobody understands what I'm going through. I'm so tired of trying.",
+        "risk_level": "High"
     }
 ]
 
@@ -193,18 +197,18 @@ h1, h2, h3, h4, h5, h6 {
 
 # Main application
 def main():
-    st.set_page_config(page_title="Feel Good App", layout="wide")
+    st.set_page_config(page_title="Mental Health Early Warning System", layout="wide")
     st.markdown(f"<style>{custom_css}</style>", unsafe_allow_html=True)
 
-    st.title("Feel Good App")
-    st.markdown("Your personal guide to feeling good")
+    st.title("Mental Health Early Warning System")
+    st.markdown("AI-powered early detection and intervention for mental health concerns")
 
     # Create tabs
-    tab1, tab2, tab3 = st.tabs(["Text Check-in", "Wellbeing Trends", "About"])
+    tab1, tab2, tab3 = st.tabs(["Text Analysis", "Behavioral Trends", "About"])
 
     # Tab 1: Text Analysis
     with tab1:
-        st.header("Journal Check-in")
+        st.header("Journal Entry Analysis")
 
         # User can select a sample or enter their own text
         use_sample = st.checkbox("Use a sample entry", value=True)
@@ -213,20 +217,20 @@ def main():
             sample_idx = st.selectbox(
                 "Select a sample journal entry:",
                 range(len(sample_entries)),
-                format_func=lambda i: f"Sample {i+1}: {sample_entries[i]['wellness_level']} "
+                format_func=lambda i: f"Sample {i+1}: {sample_entries[i]['risk_level']} Risk"
             )
             text_input = sample_entries[sample_idx]["text"]
-            text_input = st.text_area("How are you feeling today?", value=text_input, height=150)
+            text_input = st.text_area("Journal entry:", value=text_input, height=150)
         else:
             text_input = st.text_area(
-                "Write a few lines about your day:",
+                "Enter a journal entry or social media post to analyze:",
                 value="",
                 height=150,
-                placeholder="I'm feeling..."
+                placeholder="Type your journal entry here..."
             )
 
-        if st.button("Check In") and text_input:
-            with st.spinner("Analyzing your text..."):
+        if st.button("Analyze Text") and text_input:
+            with st.spinner("Analyzing text..."):
                 # Analyze the text
                 analysis_result = analyze_text(text_input)
 
@@ -234,21 +238,21 @@ def main():
                 col1, col2 = st.columns(2)
 
                 with col1:
-                    st.subheader("Overall Mood")
+                    st.subheader("Sentiment Analysis")
                     sentiment = analysis_result['sentiment']
 
-                    st.markdown("**Mood Score:**")
+                    st.markdown("**Compound Sentiment Score:**")
                     sentiment_value = sentiment['compound']
                     st.progress((sentiment_value + 1) / 2)  # Convert from -1,1 to 0,1 for progress bar
-                    st.markdown(f"Score: **{sentiment_value:.2f}** ({'Good' if sentiment_value > 0 else 'Not so good'})")
+                    st.markdown(f"Score: **{sentiment_value:.2f}** ({'Positive' if sentiment_value > 0 else 'Negative'})")
 
-                    st.markdown("Mood Details:")
+                    st.markdown("Detailed Scores:")
                     st.markdown(f"- Positive: **{sentiment['pos']:.2f}**")
                     st.markdown(f"- Neutral: **{sentiment['neu']:.2f}**")
                     st.markdown(f"- Negative: **{sentiment['neg']:.2f}**")
 
                 with col2:
-                    st.subheader("Key Areas")
+                    st.subheader("Mental Health Indicators")
 
                     # Show category scores
                     category_scores = analysis_result['category_scores']
@@ -259,101 +263,100 @@ def main():
                             st.progress(score)
                             st.markdown(f"Score: **{score:.2f}**")
 
-                # Wellness assessment
-                st.subheader("Wellness Check")
-                wellness_score = analysis_result['wellness_score']
+                # Risk assessment
+                st.subheader("Risk Assessment")
+                risk_score = analysis_result['risk_score']
 
-                # Display wellness level
-                if wellness_score < 30:
-                    wellness_label = "Very Low"
-                    wellness_color = "red"
-                elif wellness_score < 50:
-                    wellness_label = "Low"
-                    wellness_color = "orange"
-                elif wellness_score < 70:
-                    wellness_label = "Okay"
-                    wellness_color = "yellow"
+                # Display risk level
+                if risk_score < 30:
+                    risk_label = "Low Risk"
+                    risk_color = "green"
+                elif risk_score < 50:
+                    risk_label = "Low-Medium Risk"
+                    risk_color = "yellow"
+                elif risk_score < 70:
+                    risk_label = "Medium Risk"
+                    risk_color = "orange"
                 else:
-                    wellness_label = "Great"
-                    wellness_color = "green"
+                    risk_label = "High Risk"
+                    risk_color = "red"
 
-                col_wellness1, col_wellness2 = st.columns([1, 2])
+                col_risk1, col_risk2 = st.columns([1, 2])
 
-                with col_wellness1:
-                    st.markdown(f"<h3 style='color: {wellness_color};'>{wellness_label}</h3>", unsafe_allow_html=True)
-                    st.markdown(f"Score: **{wellness_score:.1f}/100**")
+                with col_risk1:
+                    st.markdown(f"<h3 style='color: {risk_color};'>{risk_label}</h3>", unsafe_allow_html=True)
+                    st.markdown(f"Score: **{risk_score:.1f}/100**")
 
-                with col_wellness2:
-                    st.progress(wellness_score / 100)
+                with col_risk2:
+                    st.progress(risk_score / 100)
                     cols_labels = st.columns(4)
-                    cols_labels[0].markdown("<p style='text-align: left;'>Very Low</p>", unsafe_allow_html=True)
-                    cols_labels[1].markdown("<p style='text-align: center;'>Low</p>", unsafe_allow_html=True)
-                    cols_labels[2].markdown("<p style='text-align: center;'>Okay</p>", unsafe_allow_html=True)
-                    cols_labels[3].markdown("<p style='text-align: right;'>Great</p>", unsafe_allow_html=True)
+                    cols_labels[0].markdown("<p style='text-align: left;'>Low</p>", unsafe_allow_html=True)
+                    cols_labels[1].markdown("<p style='text-align: center;'>Low-Med</p>", unsafe_allow_html=True)
+                    cols_labels[2].markdown("<p style='text-align: center;'>Medium</p>", unsafe_allow_html=True)
+                    cols_labels[3].markdown("<p style='text-align: right;'>High</p>", unsafe_allow_html=True)
 
-                # Recommendations based on wellness level
-                st.subheader("Suggestions for Today")
+                # Recommendations based on risk level
+                st.subheader("Personalized Recommendations")
 
-                if wellness_score < 30:
+                if risk_score < 30:
                     recommendations = [
-                        "Reach out to a friend or family member for support.",
-                        "Try some gentle stretching or deep breathing exercises.",
-                        "Consider talking to a professional.",
-                        "Remember, you are not alone."
+                        "Continue monitoring your mental well-being.",
+                        "Maintain current self-care practices.",
+                        "Consider using our mood tracking feature for ongoing awareness."
                     ]
-                elif wellness_score < 50:
+                elif risk_score < 50:
                     recommendations = [
-                        "Try a relaxing activity, like listening to music or taking a warm bath.",
-                        "Make sure you're getting enough sleep.",
-                        "Do something you enjoy, even for a short time.",
-                        "Focus on small, achievable goals."
+                        "Practice mindfulness for 10 minutes daily.",
+                        "Ensure you're maintaining regular social connections.",
+                        "Review and optimize your sleep hygiene."
                     ]
-                elif wellness_score < 70:
+                elif risk_score < 70:
                     recommendations = [
-                        "Engage in a hobby or creative activity.",
-                        "Spend some time in nature.",
-                        "Connect with loved ones.",
-                        "Practice gratitude - write down a few things you appreciate."
+                        "Consider speaking with a trusted friend about how you're feeling.",
+                        "Implement a consistent sleep schedule.",
+                        "Try daily physical activity, even short walks.",
+                        "Practice gratitude journaling."
                     ]
                 else:
                     recommendations = [
-                        "Keep up the good work!  Maintain your healthy habits.",
-                        "Share your positive energy with others.",
-                        "Try learning something new or taking on a fun challenge.",
-                        "Reflect on your successes and celebrate them."
+                        "**Reach out to a mental health professional.**",
+                        "Talk to someone you trust about how you're feeling.",
+                        "Focus on sleep, nutrition, and gentle physical activity.",
+                        "Use grounding techniques when feeling overwhelmed.",
+                        "**Remember that support is available.**"
                     ]
 
                 for rec in recommendations:
                     st.markdown(f"- {rec}")
 
-                if wellness_score < 30:
+                if risk_score >= 70:
                     st.markdown("---")
-                    st.subheader("Where to Find Help")
+                    st.subheader("Support Resources")
                     st.markdown("- **Crisis Text Line**: Text HOME to 741741")
                     st.markdown("- **National Suicide Prevention Lifeline**: 988 or 1-800-273-8255")
                     st.markdown("- **SAMHSA's National Helpline**: 1-800-662-4357")
 
     # Tab 2: Behavioral Trends
     with tab2:
-        st.header("Wellbeing Trends")
+        st.header("Behavioral Pattern Analysis")
 
         # Select profile type
         profile_type = st.radio(
-            "Show my trends as:",
-            ["Stable", "Improving"]
+            "Select profile type:",
+            ["Stable Pattern", "Declining Pattern"]
         )
 
         # Generate appropriate data
-        is_improving = profile_type == "Improving"
-        df = generate_time_series(days=30, improving=is_improving)
+        is_declining = profile_type == "Declining Pattern"
+        df = generate_time_series(days=30, declining=is_declining)
 
         # Display time series data
-        st.subheader("Your Last 30 Days")
+        st.subheader("30-Day Behavioral Patterns")
 
         # Select metric to display
         selected_metric = st.selectbox(
-            "Show me my:",
-            ["All Metrics", "Sleep", "Mood", "Social Activity"]
+            "Select metric to view:",
+            ["All Metrics", "Sleep Hours", "Mood Score", "Social Activity"]
         )
 
         if selected_metric == "All Metrics":
@@ -376,12 +379,10 @@ def main():
             st.altair_chart(chart, use_container_width=True)
 
             # Add text explanation for change point
-            if is_improving:
-                st.markdown("<p style='color: green;'>&#128300; Your wellbeing is improving!</p>", unsafe_allow_html=True)
-            else:
-                st.markdown("<p style='color: gray;'>&#128300; Your wellbeing is stable.</p>", unsafe_allow_html=True)
+            if is_declining:
+                st.markdown("<p style='color: red;'>&#128680; Detected potential decline across multiple wellbeing indicators.</p>", unsafe_allow_html=True)
 
-        elif selected_metric == "Sleep":
+        elif selected_metric == "Sleep Hours":
             chart = alt.Chart(df).mark_line().encode(
                 x=alt.X('Date:T', axis=alt.Axis(format="%Y-%m-%d")),
                 y=alt.Y('Sleep:Q', title="Hours"),
@@ -397,13 +398,11 @@ def main():
             final_chart = chart + threshold
             st.altair_chart(final_chart, use_container_width=True)
 
-            st.markdown("<p style='color: orange;'>&#11044; Recommended (6 hours)</p>", unsafe_allow_html=True)
-            if is_improving:
-                st.markdown("<p style='color: green;'>&#128300; Your sleep is improving!</p>", unsafe_allow_html=True)
-            else:
-                st.markdown("<p style='color: gray;'>&#128300; Your sleep is stable.</p>", unsafe_allow_html=True)
+            st.markdown("<p style='color: orange;'>&#11044; Concern threshold (6 hours)</p>", unsafe_allow_html=True)
+            if is_declining:
+                st.markdown("<p style='color: red;'>&#128680; Potential decline in sleep patterns detected.</p>", unsafe_allow_html=True)
 
-        elif selected_metric == "Mood":
+        elif selected_metric == "Mood Score":
             chart = alt.Chart(df).mark_line().encode(
                 x=alt.X('Date:T', axis=alt.Axis(format="%Y-%m-%d")),
                 y=alt.Y('Mood:Q', title="Mood Score"),
@@ -412,17 +411,15 @@ def main():
                 height=300
             )
             # Add a horizontal line for the concern threshold (60/100)
-            threshold = alt.Chart(pd.DataFrame({'y': [70]})).mark_rule(color='green').encode(
+            threshold = alt.Chart(pd.DataFrame({'y': [60]})).mark_rule(color='orange').encode(
                 y=alt.Y('y'),
                 tooltip=['y']
             )
             final_chart = chart + threshold
             st.altair_chart(final_chart, use_container_width=True)
-            st.markdown("<p style='color: green;'>&#11044; Good Mood (70/100)</p>", unsafe_allow_html=True)
-            if is_improving:
-                st.markdown("<p style='color: green;'>&#128300; Your mood is improving!</p>", unsafe_allow_html=True)
-            else:
-                st.markdown("<p style='color: gray;'>&#128300; Your mood is stable.</p>", unsafe_allow_html=True)
+            st.markdown("<p style='color: orange;'>&#11044; Concern threshold (60/100)</p>", unsafe_allow_html=True)
+            if is_declining:
+                st.markdown("<p style='color: red;'>&#128680; Potential decline in mood scores detected.</p>", unsafe_allow_html=True)
 
         else:  # Social Activity
             chart = alt.Chart(df).mark_line().encode(
@@ -433,104 +430,107 @@ def main():
                 height=300
             )
             # Add a horizontal line for the concern threshold (50/100)
-            threshold = alt.Chart(pd.DataFrame({'y': [60]})).mark_rule(color='green').encode(
+            threshold = alt.Chart(pd.DataFrame({'y': [50]})).mark_rule(color='orange').encode(
                 y=alt.Y('y'),
                 tooltip=['y']
             )
             final_chart = chart + threshold
             st.altair_chart(final_chart, use_container_width=True)
-            st.markdown("<p style='color: green;'>&#11044; Good Connection (60/100)</p>", unsafe_allow_html=True)
-            if is_improving:
-                st.markdown("<p style='color: green;'>&#128300; Your social connections are improving!</p>", unsafe_allow_html=True)
-            else:
-                st.markdown("<p style='color: gray;'>&#128300; Your social connections are stable.</p>", unsafe_allow_html=True)
+            st.markdown("<p style='color: orange;'>&#11044; Concern threshold (50/100)</p>", unsafe_allow_html=True)
+            if is_declining:
+                st.markdown("<p style='color: red;'>&#128680; Potential decline in social activity detected.</p>", unsafe_allow_html=True)
 
         # Add insight section
-        st.subheader("What This Means For You")
+        st.subheader("Pattern Insights")
 
-        if is_improving:
+        if is_declining:
             st.markdown("""
-            **Overall:**
-            - &#128300; We've spotted positive changes in your wellbeing over the past few weeks!
+            **System Analysis:**
 
-            **Details:**
-            - &#128315; **Sleep:** You're getting more rest.
-            - &#128315; **Mood:** You're feeling happier and more positive.
-            - &#128315; **Social:** You're connecting more with others.
+            - &#128680; **Detected decline** in multiple wellbeing indicators
+            - &#128315; **Sleep pattern disruption** beginning approximately 2 weeks ago
+            - &#128315; **Mood deterioration** showing significant correlation with sleep changes
+            - &#128315; **Social engagement reduction** following initial wellbeing decline
 
-            **Keep it up!**
-            - Continue practicing your self-care routine.
-            - Stay connected with your support system.
-            - Celebrate your progress!
+            **Recommendations:**
+
+            - Schedule sleep assessment
+            - Implement structured social reconnection plan
+            - Consider mood support interventions
             """)
         else:
             st.markdown("""
-            **Overall:**
-            - &#128994; Your wellbeing is stable, which is good!
+            **System Analysis:**
 
-            **Details:**
-            - &#128994; **Sleep:** Your sleep patterns are consistent.
-            - &#128994; **Mood:** You're feeling generally good.
-            - &#128994; **Social:** You're maintaining your social connections.
+            - &#128994; **Stable patterns** across all wellbeing indicators
+            - &#128994; **Normal fluctuations** within expected ranges
+            - &#128994; **No concerning trends** detected in the 30-day window
 
-            **Tips for staying balanced:**
-            - Continue prioritizing sleep, healthy eating, and exercise.
-            - Make time for activities you enjoy.
-            - Stay connected with friends and family.
+            **Recommendations:**
+
+            - Continue current wellness practices
+            - Maintain regular monitoring
+            - Consider preventative wellbeing activities
             """)
 
     # Tab 3: About the System
     with tab3:
-        st.header("About Your Feel Good App")
+        st.header("About the Mental Health Early Warning System")
 
         st.markdown("""
         ### How It Works
 
-        This app helps you track and improve your overall wellbeing.  It looks at a few key things:
+        This system uses natural language processing and behavioral pattern analysis to detect early warning signs of mental health concerns:
 
-        1. **Text Check-in**
-            -   We analyze your words to get a sense of your mood.
-            -   We look for words related to happiness, calmness, and other positive feelings.
+        1. **Text Analysis Component**
+            - Sentiment analysis to detect emotional tone
+            - Keyword identification for specific concerns
+            - Linguistic pattern recognition
 
-        2. **Wellbeing Trends**
-            -   We track your sleep, mood, and social activity over time.
-            -   This helps you see patterns and make positive changes.
+        2. **Behavioral Pattern Monitoring**
+            - Sleep quality tracking
+            - Mood fluctuation analysis
+            - Social engagement monitoring
+            - Activity level assessment
 
-        3.  **Personalized Suggestions**
-            -   The app gives you ideas for things you can do to feel even better.
-            -   Suggestions are tailored to your specific needs and progress.
+        3. **Early Warning Algorithm**
+            - Integration of multiple data points
+            - Pattern detection across time
+            - Personalized baseline comparisons
+            - Tailored recommendation generation
         """)
 
-        st.subheader("Your Privacy Matters")
+        st.subheader("Privacy & Ethics")
         st.markdown("""
-        We care about your privacy:
+        Our system is designed with privacy and ethics as core principles:
 
-        -   **Your data stays with you:** Everything happens on your device.
-        -   **You're in control:** You choose what you share.
-        -   **We don't store your information:** Your check-ins are private.
-        -   **We're here to support you:** This app is designed to help you feel your best.
+        - **Privacy-preserving design**: All processing happens locally
+        - **User control**: You decide what data to share and when
+        - **No data storage**: Analysis happens in real-time without persistent storage
+        - **Transparent algorithms**: Clear explanation of how assessments are made
+        - **Supportive, not diagnostic**: Provides support resources, not medical diagnoses
         """)
 
-        st.subheader("Why This App Can Help")
+        st.subheader("Potential Impact")
 
         col1, col2 = st.columns(2)
 
         with col1:
             st.markdown("""
-            **For You:**
-            -   Feel better, more often
-            -   Learn more about yourself
-            -   Get personalized support
-            -   Reduce stress and improve mood
+            **Individual Benefits:**
+            - Earlier intervention
+            - Increased self-awareness
+            - Access to tailored resources
+            - Reduced stigma through technology
             """)
 
         with col2:
             st.markdown("""
-            **For Our Community:**
-            -   Promote positive mental wellbeing
-            -   Encourage healthy habits
-            -   Provide accessible support
-            -   Help people thrive
+            **Community Benefits:**
+            - Reduced crisis incidents
+            - Improved resource allocation
+            - Data-informed mental health support
+            - Preventative rather than reactive care
             """)
 
 if __name__ == "__main__":
