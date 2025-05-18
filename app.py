@@ -200,37 +200,42 @@ def main():
     st.set_page_config(page_title="Mental Health Early Warning System", layout="wide")
     st.markdown(f"<style>{custom_css}</style>", unsafe_allow_html=True)
 
-    st.title("Mental Health Early Warning System")
-    st.markdown("AI-powered early detection and intervention for mental health concerns")
+    st.title("MindBloom: Mental Wellness Tracker")  # More engaging title
+
+    # Introduction with a Gen-Z tone
+    st.markdown(
+        "Hey there! 👋 Welcome to MindBloom, your personal space to cultivate a healthy mind. "
+        "Think of this as your digital self-care garden. Let's grow together! 🌱"
+    )
 
     # Create tabs
-    tab1, tab2, tab3 = st.tabs(["Text Analysis", "Behavioral Trends", "About"])
+    tab1, tab2, tab3 = st.tabs(["Reflect & Grow", "Bloom Tracker", "About MindBloom"]) #Tab names
 
     # Tab 1: Text Analysis
     with tab1:
-        st.header("Journal Entry Analysis")
+        st.header("Reflect on Your Day")  # More engaging header
 
         # User can select a sample or enter their own text
-        use_sample = st.checkbox("Use a sample entry", value=True)
+        use_sample = st.checkbox("Need a writing prompt?", value=True) # Changed Checkbox text
 
         if use_sample:
             sample_idx = st.selectbox(
-                "Select a sample journal entry:",
+                "Select a prompt:", # Changed dropdown text
                 range(len(sample_entries)),
-                format_func=lambda i: f"Sample {i+1}: {sample_entries[i]['risk_level']} Risk"
+                format_func=lambda i: f"Prompt {i+1}: {sample_entries[i]['risk_level']} focus" # changed format
             )
             text_input = sample_entries[sample_idx]["text"]
-            text_input = st.text_area("Journal entry:", value=text_input, height=150)
+            text_input = st.text_area("Your thoughts:", value=text_input, height=150) # Changed text area label
         else:
             text_input = st.text_area(
-                "Enter a journal entry or social media post to analyze:",
+                "Write your journal entry, rant, or share anything on your mind:", # Changed placeholder
                 value="",
                 height=150,
-                placeholder="Type your journal entry here..."
+                placeholder="Type here..."
             )
 
-        if st.button("Analyze Text") and text_input:
-            with st.spinner("Analyzing text..."):
+        if st.button("Analyze My Reflection"): # changed button text
+            with st.spinner("Analyzing your reflection..."): # Changed spinner text
                 # Analyze the text
                 analysis_result = analyze_text(text_input)
 
@@ -238,21 +243,21 @@ def main():
                 col1, col2 = st.columns(2)
 
                 with col1:
-                    st.subheader("Sentiment Analysis")
+                    st.subheader("Your Vibe Check") # Changed subheader
                     sentiment = analysis_result['sentiment']
 
-                    st.markdown("**Compound Sentiment Score:**")
+                    st.markdown("**Overall Mood Score:**") # Changed text
                     sentiment_value = sentiment['compound']
-                    st.progress((sentiment_value + 1) / 2)  # Convert from -1,1 to 0,1 for progress bar
-                    st.markdown(f"Score: **{sentiment_value:.2f}** ({'Positive' if sentiment_value > 0 else 'Negative'})")
+                    st.progress((sentiment_value + 1) / 2)
+                    st.markdown(f"Mood: **{sentiment_value:.2f}** ({'Positive' if sentiment_value > 0 else 'Negative'})") # Changed text
 
-                    st.markdown("Detailed Scores:")
-                    st.markdown(f"- Positive: **{sentiment['pos']:.2f}**")
-                    st.markdown(f"- Neutral: **{sentiment['neu']:.2f}**")
-                    st.markdown(f"- Negative: **{sentiment['neg']:.2f}**")
+                    st.markdown("Deeper Dive:") # Changed text
+                    st.markdown(f"- Positive Vibes: **{sentiment['pos']:.2f}**") # Changed text
+                    st.markdown(f"- Neutral Vibes: **{sentiment['neu']:.2f}**") # Changed text
+                    st.markdown(f"- Negative Vibes: **{sentiment['neg']:.2f}**") # Changed text
 
                 with col2:
-                    st.subheader("Mental Health Indicators")
+                    st.subheader("Wellness Focus") # Changed subheader to wellness
 
                     # Show category scores
                     category_scores = analysis_result['category_scores']
@@ -264,66 +269,65 @@ def main():
                             st.markdown(f"Score: **{score:.2f}**")
 
                 # Risk assessment
-                st.subheader("Risk Assessment")
+                st.subheader("Growth Potential") # Changed to growth potential
                 risk_score = analysis_result['risk_score']
 
-                # Display risk level
+                # Display risk level - changed labels to be more positive and aligned with growth
                 if risk_score < 30:
-                    risk_label = "Low Risk"
+                    risk_label = "Blooming 🌱"
                     risk_color = "green"
                 elif risk_score < 50:
-                    risk_label = "Low-Medium Risk"
+                    risk_label = "Sprouting 🌿"
                     risk_color = "yellow"
                 elif risk_score < 70:
-                    risk_label = "Medium Risk"
+                    risk_label = "Growing 🪴"
                     risk_color = "orange"
                 else:
-                    risk_label = "High Risk"
+                    risk_label = "Needs some TLC 😢" #TLC = Tender loving care
                     risk_color = "red"
 
                 col_risk1, col_risk2 = st.columns([1, 2])
 
                 with col_risk1:
                     st.markdown(f"<h3 style='color: {risk_color};'>{risk_label}</h3>", unsafe_allow_html=True)
-                    st.markdown(f"Score: **{risk_score:.1f}/100**")
+                    st.markdown(f"Growth Score: **{risk_score:.1f}/100**") # Changed text
 
                 with col_risk2:
                     st.progress(risk_score / 100)
                     cols_labels = st.columns(4)
-                    cols_labels[0].markdown("<p style='text-align: left;'>Low</p>", unsafe_allow_html=True)
-                    cols_labels[1].markdown("<p style='text-align: center;'>Low-Med</p>", unsafe_allow_html=True)
-                    cols_labels[2].markdown("<p style='text-align: center;'>Medium</p>", unsafe_allow_html=True)
-                    cols_labels[3].markdown("<p style='text-align: right;'>High</p>", unsafe_allow_html=True)
+                    cols_labels[0].markdown("<p style='text-align: left;'>Blooming</p>", unsafe_allow_html=True)
+                    cols_labels[1].markdown("<p style='text-align: center;'>Sprouting</p>", unsafe_allow_html=True)
+                    cols_labels[2].markdown("<p style='text-align: center;'>Growing</p>", unsafe_allow_html=True)
+                    cols_labels[3].markdown("<p style='text-align: right;'>Needs TLC</p>", unsafe_allow_html=True) # Changed
 
-                # Recommendations based on risk level
-                st.subheader("Personalized Recommendations")
-
+                # Recommendations based on risk level - changed to be more encouraging and less clinical
+                st.subheader("Your Growth Plan")
                 if risk_score < 30:
                     recommendations = [
-                        "Continue monitoring your mental well-being.",
-                        "Maintain current self-care practices.",
-                        "Consider using our mood tracking feature for ongoing awareness."
+                        "Keep nurturing your mind! You're doing great! 🌱",
+                        "Continue your self-care routine.  Small steps, big impact.",
+                        "Use the Bloom Tracker to monitor your progress and stay motivated."
                     ]
                 elif risk_score < 50:
                     recommendations = [
-                        "Practice mindfulness for 10 minutes daily.",
-                        "Ensure you're maintaining regular social connections.",
-                        "Review and optimize your sleep hygiene."
+                        "Let's add a little more sunshine! Try some mindfulness today. ☀️",
+                        "Connect with your support system.  A little social boost can do wonders. 🫂",
+                        "Ensure you're getting enough rest.  Sleep is food for the brain. 😴"
                     ]
                 elif risk_score < 70:
                     recommendations = [
-                        "Consider speaking with a trusted friend about how you're feeling.",
-                        "Implement a consistent sleep schedule.",
-                        "Try daily physical activity, even short walks.",
-                        "Practice gratitude journaling."
+                        "You've got this!  Consider talking to a friend or mentor. 🗣️",
+                        "Establish a consistent sleep schedule.  Your mind will thank you. ⏰",
+                        "Get moving!  Even a short walk can clear your head. 🚶‍♀️",
+                        "Practice gratitude.  Focus on the good stuff.  🙏"
                     ]
                 else:
                     recommendations = [
-                        "**Reach out to a mental health professional.**",
-                        "Talk to someone you trust about how you're feeling.",
-                        "Focus on sleep, nutrition, and gentle physical activity.",
-                        "Use grounding techniques when feeling overwhelmed.",
-                        "**Remember that support is available.**"
+                        "It's okay to ask for help.  Reach out to a professional.  We're here for you. 💖",
+                        "Talk to someone you trust.  Sharing is caring. 🫂",
+                        "Prioritize sleep, nutrition, and gentle exercise.  Be kind to your body. 💖",
+                        "Use grounding techniques to stay present.  You are strong. 💪",
+                        "Remember, you're not alone.  Support is available. 💖"
                     ]
 
                 for rec in recommendations:
@@ -338,25 +342,25 @@ def main():
 
     # Tab 2: Behavioral Trends
     with tab2:
-        st.header("Behavioral Pattern Analysis")
+        st.header("Your Bloom Tracker") # Changed header
 
         # Select profile type
         profile_type = st.radio(
-            "Select profile type:",
-            ["Stable Pattern", "Declining Pattern"]
+            "Track your growth:", # Changed radio button text
+            ["Show Stable Growth", "Show Growth with Challenges"] # Changed radio button options
         )
 
         # Generate appropriate data
-        is_declining = profile_type == "Declining Pattern"
+        is_declining = profile_type == "Show Growth with Challenges" # changed variable name
         df = generate_time_series(days=30, declining=is_declining)
 
         # Display time series data
-        st.subheader("30-Day Behavioral Patterns")
+        st.subheader("30-Day Growth Journey") # Changed subheader
 
         # Select metric to display
         selected_metric = st.selectbox(
-            "Select metric to view:",
-            ["All Metrics", "Sleep Hours", "Mood Score", "Social Activity"]
+            "View your progress in:", # Changed selectbox text
+            ["All Metrics", "Sleep Quality", "Mood Stability", "Social Connection"] # Changed selectbox options
         )
 
         if selected_metric == "All Metrics":
@@ -380,9 +384,9 @@ def main():
 
             # Add text explanation for change point
             if is_declining:
-                st.markdown("<p style='color: red;'>&#128680; Detected potential decline across multiple wellbeing indicators.</p>", unsafe_allow_html=True)
+                st.markdown("<p style='color: red;'>&#128680; Detected some challenges in your growth journey.</p>", unsafe_allow_html=True) # Changed text
 
-        elif selected_metric == "Sleep Hours":
+        elif selected_metric == "Sleep Quality":
             chart = alt.Chart(df).mark_line().encode(
                 x=alt.X('Date:T', axis=alt.Axis(format="%Y-%m-%d")),
                 y=alt.Y('Sleep:Q', title="Hours"),
@@ -398,11 +402,11 @@ def main():
             final_chart = chart + threshold
             st.altair_chart(final_chart, use_container_width=True)
 
-            st.markdown("<p style='color: orange;'>&#11044; Concern threshold (6 hours)</p>", unsafe_allow_html=True)
+            st.markdown("<p style='color: orange;'>&#11044; Recommended sleep threshold (6 hours)</p>", unsafe_allow_html=True) #changed
             if is_declining:
-                st.markdown("<p style='color: red;'>&#128680; Potential decline in sleep patterns detected.</p>", unsafe_allow_html=True)
+                st.markdown("<p style='color: red;'>&#128680; Potential dip in sleep quality detected.</p>", unsafe_allow_html=True) # Changed
 
-        elif selected_metric == "Mood Score":
+        elif selected_metric == "Mood Stability":
             chart = alt.Chart(df).mark_line().encode(
                 x=alt.X('Date:T', axis=alt.Axis(format="%Y-%m-%d")),
                 y=alt.Y('Mood:Q', title="Mood Score"),
@@ -417,14 +421,14 @@ def main():
             )
             final_chart = chart + threshold
             st.altair_chart(final_chart, use_container_width=True)
-            st.markdown("<p style='color: orange;'>&#11044; Concern threshold (60/100)</p>", unsafe_allow_html=True)
+            st.markdown("<p style='color: orange;'>&#11044; Recommended mood stability threshold (60/100)</p>", unsafe_allow_html=True) #changed
             if is_declining:
-                st.markdown("<p style='color: red;'>&#128680; Potential decline in mood scores detected.</p>", unsafe_allow_html=True)
+                st.markdown("<p style='color: red;'>&#128680; Potential dip in mood stability detected.</p>", unsafe_allow_html=True) # Changed
 
         else:  # Social Activity
             chart = alt.Chart(df).mark_line().encode(
                 x=alt.X('Date:T', axis=alt.Axis(format="%Y-%m-%d")),
-                y=alt.Y('Social:Q', title="Social Activity"),
+                y=alt.Y('Social:Q', title="Social Connection"), # Changed
                 tooltip=['Date:T', 'Social:Q']
             ).properties(
                 height=300
@@ -436,23 +440,23 @@ def main():
             )
             final_chart = chart + threshold
             st.altair_chart(final_chart, use_container_width=True)
-            st.markdown("<p style='color: orange;'>&#11044; Concern threshold (50/100)</p>", unsafe_allow_html=True)
+            st.markdown("<p style='color: orange;'>&#11044; Recommended social connection threshold (50/100)</p>", unsafe_allow_html=True) #changed
             if is_declining:
-                st.markdown("<p style='color: red;'>&#128680; Potential decline in social activity detected.</p>", unsafe_allow_html=True)
+                st.markdown("<p style='color: red;'>&#128680; Potential dip in social connection detected.</p>", unsafe_allow_html=True) # Changed
 
         # Add insight section
-        st.subheader("Pattern Insights")
+        st.subheader("Your Growth Insights") # Changed
 
         if is_declining:
             st.markdown("""
             **System Analysis:**
 
-            - &#128680; **Detected decline** in multiple wellbeing indicators
+            - &#128680; **Detected some challenges** in your growth journey
             - &#128315; **Sleep pattern disruption** beginning approximately 2 weeks ago
             - &#128315; **Mood deterioration** showing significant correlation with sleep changes
             - &#128315; **Social engagement reduction** following initial wellbeing decline
 
-            **Recommendations:**
+            **Here's how we can nurture your growth:**
 
             - Schedule sleep assessment
             - Implement structured social reconnection plan
@@ -462,75 +466,76 @@ def main():
             st.markdown("""
             **System Analysis:**
 
-            - &#128994; **Stable patterns** across all wellbeing indicators
+            - &#128994; **Stable growth patterns** across all wellbeing indicators
             - &#128994; **Normal fluctuations** within expected ranges
             - &#128994; **No concerning trends** detected in the 30-day window
 
-            **Recommendations:**
+            **Keep thriving! Here are some tips:**
 
-            - Continue current wellness practices
-            - Maintain regular monitoring
-            - Consider preventative wellbeing activities
+            - Continue your current wellness practices
+            - Maintain regular check-ins with your Bloom Tracker
+            - Consider adding new wellness activities to your routine
             """)
 
     # Tab 3: About the System
     with tab3:
-        st.header("About the Mental Health Early Warning System")
+        st.header("About MindBloom") # Changed
 
         st.markdown("""
         ### How It Works
 
-        This system uses natural language processing and behavioral pattern analysis to detect early warning signs of mental health concerns:
+        MindBloom uses a blend of technology and positive psychology to help you cultivate a healthy mind:
 
-        1. **Text Analysis Component**
-            - Sentiment analysis to detect emotional tone
-            - Keyword identification for specific concerns
-            - Linguistic pattern recognition
+        1. **Reflect & Grow Component**
+            - Sentiment analysis to understand your emotional state
+            - Keyword identification to pinpoint specific areas for growth
+            - Linguistic pattern recognition for deeper insights
 
-        2. **Behavioral Pattern Monitoring**
-            - Sleep quality tracking
-            - Mood fluctuation analysis
-            - Social engagement monitoring
-            - Activity level assessment
+        2. **Bloom Tracker**
+            - Sleep quality tracking to monitor rest patterns
+            - Mood fluctuation analysis for emotional stability
+            - Social engagement monitoring for connection levels
+            - Activity level assessment for overall wellbeing
 
-        3. **Early Warning Algorithm**
-            - Integration of multiple data points
-            - Pattern detection across time
-            - Personalized baseline comparisons
-            - Tailored recommendation generation
+        3. **Personalized Growth Algorithm**
+            - Integration of multiple data points for a holistic view
+            - Pattern detection over time to identify trends
+            - Personalized baseline comparisons for tailored insights
+            - Tailored recommendation generation for actionable steps
         """)
 
-        st.subheader("Privacy & Ethics")
+        st.subheader("Privacy & Ethics: Your Trust is Our Priority") # Changed
+
         st.markdown("""
-        Our system is designed with privacy and ethics as core principles:
+        MindBloom is designed with your privacy and trust in mind:
 
-        - **Privacy-preserving design**: All processing happens locally
-        - **User control**: You decide what data to share and when
-        - **No data storage**: Analysis happens in real-time without persistent storage
-        - **Transparent algorithms**: Clear explanation of how assessments are made
-        - **Supportive, not diagnostic**: Provides support resources, not medical diagnoses
+        - **Privacy-preserving design**:  Your data stays with you.
+        - **User control**:  You choose what to share and when.
+        - **No data storage**:  Analysis happens in real-time.
+        - **Transparent algorithms**:  We're open about how things work.
+        - **Supportive, not diagnostic**:  We offer resources, not diagnoses.
         """)
 
-        st.subheader("Potential Impact")
+        st.subheader("Potential Impact: Let's Grow Together") # Changed
 
         col1, col2 = st.columns(2)
 
         with col1:
             st.markdown("""
             **Individual Benefits:**
-            - Earlier intervention
-            - Increased self-awareness
+            - Earlier self-awareness
             - Access to tailored resources
             - Reduced stigma through technology
+            - A positive and empowering approach to mental wellness
             """)
 
         with col2:
             st.markdown("""
             **Community Benefits:**
-            - Reduced crisis incidents
-            - Improved resource allocation
-            - Data-informed mental health support
-            - Preventative rather than reactive care
+            - Promotes a culture of proactive mental wellness
+            - Provides data-informed insights for community support
+            - Encourages preventative care and reduces crisis situations
+            - Fosters a more supportive and understanding community
             """)
 
 if __name__ == "__main__":
