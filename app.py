@@ -66,24 +66,32 @@ def generate_time_series(days=30, declining=True):
     dates = [datetime.now() - timedelta(days=i) for i in range(days)]
     dates.reverse()
     
+    # Calculate lengths for each section to ensure equal array lengths
+    section1 = days // 3
+    section2 = days // 3
+    section3 = days - section1 - section2  # Ensure all sections add up to exactly 'days'
+    
     if declining:
         # Generate declining mental health pattern
-        sleep_hours = [7 + random.uniform(-0.5, 0.5) for _ in range(days//2)] + \
-                     [6 + random.uniform(-1.0, 0.5) for _ in range(days//4)] + \
-                     [5 + random.uniform(-1.0, 0.5) for _ in range(days//4)]
+        sleep_hours = [7 + random.uniform(-0.5, 0.5) for _ in range(section1)] + \
+                     [6 + random.uniform(-1.0, 0.5) for _ in range(section2)] + \
+                     [5 + random.uniform(-1.0, 0.5) for _ in range(section3)]
         
-        mood_scores = [80 + random.uniform(-10, 10) for _ in range(days//2)] + \
-                     [65 + random.uniform(-15, 10) for _ in range(days//4)] + \
-                     [50 + random.uniform(-15, 5) for _ in range(days//4)]
+        mood_scores = [80 + random.uniform(-10, 10) for _ in range(section1)] + \
+                     [65 + random.uniform(-15, 10) for _ in range(section2)] + \
+                     [50 + random.uniform(-15, 5) for _ in range(section3)]
                      
-        social_scores = [75 + random.uniform(-15, 15) for _ in range(days//2)] + \
-                       [60 + random.uniform(-20, 10) for _ in range(days//4)] + \
-                       [40 + random.uniform(-15, 10) for _ in range(days//4)]
+        social_scores = [75 + random.uniform(-15, 15) for _ in range(section1)] + \
+                       [60 + random.uniform(-20, 10) for _ in range(section2)] + \
+                       [40 + random.uniform(-15, 10) for _ in range(section3)]
     else:
         # Generate stable pattern
         sleep_hours = [7 + random.uniform(-0.7, 0.7) for _ in range(days)]
         mood_scores = [75 + random.uniform(-15, 15) for _ in range(days)]
         social_scores = [70 + random.uniform(-20, 20) for _ in range(days)]
+    
+    # Verify all lists have the same length
+    assert len(dates) == len(sleep_hours) == len(mood_scores) == len(social_scores), "Array length mismatch"
     
     return pd.DataFrame({
         'Date': dates,
