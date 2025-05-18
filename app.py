@@ -132,7 +132,8 @@ with col2:
     st.metric("Sentiment", f"{data['sentiment']:.2f}")
 
 st.subheader("🤖 AI Risk Detection")
-st.progress(min(anomaly_score/1.5, 1.0))
+progress_value = max(0.0, min(anomaly_score / 1.5, 1.0))
+st.progress(progress_value)
 if not is_anomaly:
     st.success("Status: Stable. No anomaly detected.")
 elif anomaly_score < 0.6:
