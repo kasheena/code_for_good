@@ -215,8 +215,8 @@ def main():
     with tab1:
         st.header("Journal Entry Analysis")
 
-        # Use a radio button for sample selection
-        use_sample = st.radio("Use a sample entry", [True, False], index=0)
+        # Use a checkbox for sample selection
+        use_sample = st.checkbox("Use a sample journal entry", value=True) # Default to checked
 
         if use_sample:
             sample_idx = st.selectbox(
