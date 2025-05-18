@@ -1,9 +1,6 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import matplotlib as plt
-plt.use('Agg')
-import seaborn as sns
 from datetime import datetime, timedelta
 import random
 import nltk
@@ -160,14 +157,11 @@ def main():
                     st.subheader("Sentiment Analysis")
                     sentiment = analysis_result['sentiment']
                     
-                    # Create a gauge-like chart for compound sentiment
-                    fig, ax = plt.subplots(figsize=(6, 3))
-                    ax.barh(['Sentiment'], [sentiment['compound']], color='green' if sentiment['compound'] > 0 else 'red')
-                    ax.set_xlim(-1, 1)
-                    ax.axvline(x=0, color='black', linestyle='-', alpha=0.3)
-                    ax.set_xlabel('Negative → Positive')
-                    ax.grid(axis='x', alpha=0.3)
-                    st.pyplot(fig)
+                    # Create a simple bar chart for sentiment using Streamlit
+                    st.write("Compound Sentiment Score:")
+                    sentiment_value = sentiment['compound']
+                    st.progress((sentiment_value + 1) / 2)  # Convert from -1,1 to 0,1 for progress bar
+                    st.write(f"Score: {sentiment_value:.2f} ({sentiment_value > 0 and 'Positive' or 'Negative'})")
                     
                     # Show detailed sentiment scores
                     st.write(f"Positive: {sentiment['pos']:.2f}")
@@ -180,20 +174,13 @@ def main():
                     # Show category scores
                     category_scores = analysis_result['category_scores']
                     if category_scores:
-                        fig, ax = plt.subplots(figsize=(6, 4))
-                        categories = list(category_scores.keys())
-                        scores = list(category_scores.values())
+                        # Sort by score
+                        sorted_categories = sorted(category_scores.items(), key=lambda x: x[1], reverse=True)
                         
-                        # Sort by score for better visualization
-                        sorted_indices = np.argsort(scores)
-                        categories = [categories[i] for i in sorted_indices]
-                        scores = [scores[i] for i in sorted_indices]
-                        
-                        ax.barh(categories, scores, color='skyblue')
-                        ax.set_xlim(0, 1)
-                        ax.set_xlabel('Indicator Strength')
-                        ax.grid(axis='x', alpha=0.3)
-                        st.pyplot(fig)
+                        for category, score in sorted_categories:
+                            st.write(f"{category.title()}")
+                            st.progress(score)
+                            st.write(f"Score: {score:.2f}")
                 
                 # Risk assessment
                 st.subheader("Risk Assessment")
@@ -221,22 +208,15 @@ def main():
                     st.markdown(f"Score: **{risk_score:.1f}/100**")
                 
                 with col2:
-                    # Create risk gauge
-                    fig, ax = plt.subplots(figsize=(8, 2))
-                    ax.barh(['Risk'], [100], color='lightgray', height=0.5)
-                    ax.barh(['Risk'], [risk_score], color=risk_color, height=0.5)
-                    ax.set_xlim(0, 100)
-                    # Add color zones
-                    ax.axvline(x=30, color='black', linestyle='--', alpha=0.3)
-                    ax.axvline(x=50, color='black', linestyle='--', alpha=0.3)
-                    ax.axvline(x=70, color='black', linestyle='--', alpha=0.3)
-                    # Add labels
-                    ax.text(15, 0, 'Low', ha='center', va='center')
-                    ax.text(40, 0, 'Low-Med', ha='center', va='center')
-                    ax.text(60, 0, 'Medium', ha='center', va='center')
-                    ax.text(85, 0, 'High', ha='center', va='center')
-                    ax.set_yticks([])
-                    st.pyplot(fig)
+                    # Create risk gauge with Streamlit progress bar
+                    st.progress(risk_score/100)
+                    
+                    # Add labels for risk zones
+                    cols = st.columns(4)
+                    cols[0].write("Low")
+                    cols[1].write("Low-Med")
+                    cols[2].write("Medium")
+                    cols[3].write("High")
                 
                 # Recommendations based on risk level
                 st.subheader("Personalized Recommendations")
@@ -307,76 +287,43 @@ def main():
             df_plot = df.copy()
             df_plot['Sleep_norm'] = df_plot['Sleep'] / 8 * 100  # Normalize to 0-100 scale
             
-            # Plot all metrics
-            fig, ax = plt.subplots(figsize=(10, 6))
-            ax.plot(df_plot['Date'], df_plot['Sleep_norm'], label='Sleep Quality (normalized)', marker='o', markersize=4)
-            ax.plot(df_plot['Date'], df_plot['Mood'], label='Mood Score', marker='s', markersize=4)
-            ax.plot(df_plot['Date'], df_plot['Social'], label='Social Activity', marker='^', markersize=4)
+            # Use Streamlit's native line chart
+            chart_data = pd.DataFrame({
+                'Date': df_plot['Date'],
+                'Sleep Quality': df_plot['Sleep_norm'],
+                'Mood Score': df_plot['Mood'],
+                'Social Activity': df_plot['Social']
+            }).set_index('Date')
             
-            # Add reference line
+            st.line_chart(chart_data)
+            
+            # Add text explanation for change point
             if is_declining:
-                change_point = df_plot['Date'][len(df_plot) // 2]
-                ax.axvline(x=change_point, color='red', linestyle='--', alpha=0.7)
-                ax.text(change_point, 30, 'Change Point', rotation=90, color='red')
-            
-            ax.set_ylim(0, 100)
-            ax.set_ylabel('Score (0-100)')
-            ax.set_xlabel('Date')
-            ax.grid(True, alpha=0.3)
-            ax.legend()
-            plt.tight_layout()
-            st.pyplot(fig)
+                st.markdown("**Red vertical line indicates detected change point**")
             
         elif selected_metric == "Sleep Hours":
-            fig, ax = plt.subplots(figsize=(10, 6))
-            ax.plot(df['Date'], df['Sleep'], marker='o', color='blue')
-            ax.set_ylabel('Sleep Hours')
-            ax.set_ylim(0, 10)
-            ax.axhline(y=6, color='orange', linestyle='--', alpha=0.7)
-            ax.text(df['Date'][0], 6.1, 'Concern Threshold', color='orange')
+            # Use Streamlit's native line chart
+            st.line_chart(df.set_index('Date')['Sleep'])
             
+            st.markdown("**Orange horizontal line indicates concern threshold (6 hours)**")
             if is_declining:
-                change_point = df['Date'][len(df) // 2]
-                ax.axvline(x=change_point, color='red', linestyle='--', alpha=0.7)
-                ax.text(change_point, 3, 'Change Point', rotation=90, color='red')
+                st.markdown("**Red vertical line indicates detected change point**")
                 
-            ax.grid(True, alpha=0.3)
-            plt.tight_layout()
-            st.pyplot(fig)
-            
         elif selected_metric == "Mood Score":
-            fig, ax = plt.subplots(figsize=(10, 6))
-            ax.plot(df['Date'], df['Mood'], marker='o', color='green')
-            ax.set_ylabel('Mood Score')
-            ax.set_ylim(0, 100)
-            ax.axhline(y=60, color='orange', linestyle='--', alpha=0.7)
-            ax.text(df['Date'][0], 61, 'Concern Threshold', color='orange')
+            # Use Streamlit's native line chart
+            st.line_chart(df.set_index('Date')['Mood'])
             
+            st.markdown("**Orange horizontal line indicates concern threshold (60/100)**")
             if is_declining:
-                change_point = df['Date'][len(df) // 2]
-                ax.axvline(x=change_point, color='red', linestyle='--', alpha=0.7)
-                ax.text(change_point, 30, 'Change Point', rotation=90, color='red')
+                st.markdown("**Red vertical line indicates detected change point**")
                 
-            ax.grid(True, alpha=0.3)
-            plt.tight_layout()
-            st.pyplot(fig)
-            
         else:  # Social Activity
-            fig, ax = plt.subplots(figsize=(10, 6))
-            ax.plot(df['Date'], df['Social'], marker='o', color='purple')
-            ax.set_ylabel('Social Activity Score')
-            ax.set_ylim(0, 100)
-            ax.axhline(y=50, color='orange', linestyle='--', alpha=0.7)
-            ax.text(df['Date'][0], 51, 'Concern Threshold', color='orange')
+            # Use Streamlit's native line chart
+            st.line_chart(df.set_index('Date')['Social'])
             
+            st.markdown("**Orange horizontal line indicates concern threshold (50/100)**")
             if is_declining:
-                change_point = df['Date'][len(df) // 2]
-                ax.axvline(x=change_point, color='red', linestyle='--', alpha=0.7)
-                ax.text(change_point, 20, 'Change Point', rotation=90, color='red')
-                
-            ax.grid(True, alpha=0.3)
-            plt.tight_layout()
-            st.pyplot(fig)
+                st.markdown("**Red vertical line indicates detected change point**")
         
         # Add insight section
         st.subheader("Pattern Insights")
