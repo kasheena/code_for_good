@@ -4,6 +4,7 @@ import PyPDF2
 from io import BytesIO
 import requests
 from bs4 import BeautifulSoup
+import re
 
 # --- Constants ---
 BIAS_RULES = {
@@ -50,12 +51,24 @@ def extract_text_from_pdf(uploaded_file):
     return " ".join([page.extract_text() for page in pdf_reader.pages])
 
 def extract_text_from_url(url):
-    """Basic web scraping for job ads"""
+    """Improved web scraping for job ads"""
     try:
-        response = requests.get(url)
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+        }
+        response = requests.get(url, headers=headers, timeout=10)
         soup = BeautifulSoup(response.text, 'html.parser')
-        return ' '.join([p.get_text() for p in soup.find_all('p')])
-    except:
+        
+        # Remove unwanted elements
+        for element in soup(["script", "style", "nav", "footer", "header"]):
+            element.decompose()
+        
+        # Get clean text
+        text = soup.get_text(separator=' ', strip=True)
+        text = re.sub(r'\s+', ' ', text)  # Normalize whitespace
+        return text
+    except Exception as e:
+        st.error(f"Error scraping URL: {str(e)}")
         return ""
 
 # --- Streamlit App ---
@@ -70,6 +83,13 @@ This tool detects biased language in job postings that may discourage diverse ap
 - **Orange**: Exclusionary terms
 """)
 
+# Demo data
+DEMO_TEXTS = {
+    "Tech (Highly Biased)": "We need a ROCKSTAR Python ninja who can dominate the codebase! Must be aggressive in code reviews and work hard/play hard.",
+    "Healthcare (Subtle Bias)": "Seeking a compassionate nurse to nurture elderly patients. Must be quietly supportive and emotionally intelligent.",
+    "Neutral Example": "Software Engineer needed. Requirements: 3+ years Python experience, strong problem-solving skills."
+}
+
 # Main UI
 st.title("🔍 Job Ad Bias Detector")
 st.markdown("Paste a job description, upload a PDF, or enter a URL to analyze for biased language.")
@@ -78,15 +98,22 @@ input_method = st.radio("Input method:", ("Text", "PDF Upload", "URL"))
 
 job_desc = ""
 if input_method == "Text":
-    job_desc = st.text_area("Paste job description here:", height=300)
+    selected_demo = st.selectbox("Or select a demo text:", list(DEMO_TEXTS.keys()))
+    job_desc = st.text_area("Paste job description here:", DEMO_TEXTS[selected_demo], height=300)
 elif input_method == "PDF Upload":
     uploaded_file = st.file_uploader("Upload PDF", type="pdf")
     if uploaded_file:
         job_desc = extract_text_from_pdf(uploaded_file)
 elif input_method == "URL":
-    url = st.text_input("Enter job posting URL:")
-    if url:
-        job_desc = extract_text_from_url(url)
+    url = st.text_input("Enter job posting URL:", "https://example.com/job-posting")
+    if st.button("Scrape URL"):
+        if url:
+            with st.spinner("Scraping URL..."):
+                job_desc = extract_text_from_url(url)
+                if job_desc:
+                    st.success("URL content loaded successfully!")
+                else:
+                    st.warning("Couldn't extract text from URL. Try pasting the text directly.")
 
 if st.button("Analyze") and job_desc:
     with st.spinner("Detecting biases..."):
@@ -115,4 +142,4 @@ if st.button("Analyze") and job_desc:
 
 # Footer
 st.markdown("---")
-st.markdown("Built with ♥ | Kasheena Mulla) ")
+st.markdown("Built with ♥ | Kasheena Mulla")
