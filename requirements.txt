@@ -1,5 +1,8 @@
 streamlit==1.32.0
-matplotlib==3.7.3
-seaborn==0.12.2
-nltk==3.8.1
-scikit-learn>=1.3.0
+transformers>=4.35.0
+torch>=2.0.0
+PyPDF2>=3.0.0
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+python-dotenv>=1.0.0  # Optional for API keys
+tqdm>=4.65.0  # For progress bars in model downloads
