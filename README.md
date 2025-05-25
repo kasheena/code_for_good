@@ -1,1 +1,6 @@
-# code_for_good
+## Inspiration
+While reviewing hiring trends and job descriptions in the tech industry, I observed recurring patterns in how language was being used—often subtly—but with potentially significant implications on inclusivity. Inspired by a desire to build something practical yet socially conscious, I explored how the language of job postings can unintentionally shape candidate self-selection, particularly across gender lines.
+
+A study titled “An Exploration of Gender Bias in Information Technology Job Advertisements” (2023, ResearchGate) empirically demonstrates that subtle gender-coded language continues to persist in modern job ads, which can affect how men and women perceive their suitability for roles. This insight sparked the idea to develop a tool that goes beyond surface-level keyword detection to actively assist recruiters and hiring managers in making their job descriptions more inclusive and welcoming to all.
+## What it does
+Job Ad Bias Detector is a lightweight web app that analyzes job descriptions for gender-coded language and exclusionary phrasing. Users can input text manually, upload a PDF, or paste a URL. The tool then identifies gender-coded terms—masculine-coded, feminine-coded, and exclusionary phrases—highlighting them in real-time using intuitive color coding.
