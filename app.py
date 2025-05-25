@@ -96,7 +96,7 @@ def extract_text_from_pdf(uploaded_file):
         return ""
 
 def extract_text_from_url(url):
-    """Improved web scraping for job ads with better error handling"""
+    """Improved web scraping for job ads and raw text files with better error handling"""
     try:
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
@@ -104,6 +104,17 @@ def extract_text_from_url(url):
         response = requests.get(url, headers=headers, timeout=15)
         response.raise_for_status()
         
+        # Check if it's a raw text file (like GitHub raw files)
+        content_type = response.headers.get('content-type', '').lower()
+        if 'text/plain' in content_type or url.endswith('.txt') or 'raw.githubusercontent.com' in url:
+            # It's a plain text file, return the content directly
+            text = response.text
+            # Basic cleanup for text files
+            text = re.sub(r'\r\n', '\n', text)  # Normalize Windows line endings
+            text = re.sub(r'\r', '\n', text)    # Normalize Mac line endings
+            return text.strip()
+        
+        # Otherwise, treat as HTML and parse
         soup = BeautifulSoup(response.text, 'html.parser')
         
         # Remove unwanted elements
@@ -258,6 +269,19 @@ with col1:
                         
     elif input_method == "URL Scraping":
         url = st.text_input("Enter the job posting URL:", placeholder="https://example.com/job-posting")
+        
+        # Add some example URLs for testing
+        st.markdown("**Try these examples:**")
+        example_urls = [
+            "https://raw.githubusercontent.com/kasheena/code_for_good/main/Example_Subtle%20Bias.txt",
+            "https://raw.githubusercontent.com/kasheena/code_for_good/main/Example_Highly_Biased.txt"
+        ]
+        
+        selected_example = st.selectbox("Or select an example URL:", [""] + example_urls)
+        if selected_example:
+            url = selected_example
+            st.text_input("Selected URL:", value=url, disabled=True, key="selected_url_display")
+        
         if st.button("🔗 Scrape Content", type="secondary"):
             if url and url.startswith(('http://', 'https://')):
                 with st.spinner("Fetching content from URL..."):
@@ -266,6 +290,8 @@ with col1:
                         st.success(f"✅ Scraped {len(job_desc)} characters from URL")
                         with st.expander("Preview scraped content"):
                             st.text(job_desc[:500] + "..." if len(job_desc) > 500 else job_desc)
+                    else:
+                        st.error("Could not extract content from the URL. Please check the URL and try again.")
             else:
                 st.error("Please enter a valid URL starting with http:// or https://")
 
