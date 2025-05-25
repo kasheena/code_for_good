@@ -15,14 +15,19 @@ except RuntimeError:
 # --- Bias Rules ---
 BIAS_RULES = {
     "male_coded": [
-        "aggressive", "ambitious", "assertive", "challenge", "competitive",
-        "confident", "courageous", "decide", "decision", "decisive",
-        "dominant", "dominance", "driven", "independent", "individual",
-        "lead", "objective", "outspoken", "persist", "principle",
-        "superior", "tough"
+        "ambitious", "competitive", "confident", "independent", "analytical",
+        "technical", "objective", "strategic", "leader", "challenge",
+        "decisive", "bold", "entrepreneurial", "assertive", "drive",
+        "dominant", "risk-taking", "competitive", "results-oriented",
+        "self-reliant", "forceful", "logical", "tough-minded", "outspoken",
+        "problem solver", "go-getter", "directive", "dominance", "command",
+        "focused", "dominant", "vigorous", "persistent", "self-assured",
+        "visionary", "trailblazer", "hands-on", "independent thinker",
+        "take charge", "self-confident", "high-achiever", "decisiveness",
+        "boldness", "fearless", "resilient", "champion", "competitive spirit"
     ],
     "female_coded": [
-        "agree", "affectionate", "child", "cheer", "collaborate",
+        "agree", "affectionate", "childlike", "cheer", "collaborate",
         "commit", "communal", "compassion", "connect", "considerate",
         "cooperate", "depend", "emotion", "empath", "feel", "flatterable",
         "gentle", "honest", "interpersonal", "kind", "kinship", "loyal",
@@ -31,8 +36,9 @@ BIAS_RULES = {
         "trust", "understand", "warm", "whin", "yield"
     ],
     "exclusionary": [
-        "rockstar", "ninja", "guru", "wizard", "young", "fresh",
-        "recent grad", "digital native", "fast-paced", "work hard, play hard"
+        "young and energetic", "digital native", "recent graduate", "native English speaker",
+        "able-bodied", "must lift 50 pounds", "fast learner", "must own a car",
+        "cultural fit", "like a family", "workaholic"
     ]
 }
 
