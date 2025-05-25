@@ -117,13 +117,19 @@ def main():
     elif input_method == "URL":
         url = st.text_input("Enter URL (supports job postings or GitHub raw text files):", 
                            "https://raw.githubusercontent.com/kasheena/code_for_good/main/Example_Subtle%20Bias.txt")
+        
         if st.button("Load Content"):
             with st.spinner("Loading content..."):
                 job_desc = extract_text_from_url(url)
                 if job_desc:
+                    st.session_state['job_desc'] = job_desc
                     st.success("Content loaded successfully!")
                 else:
                     st.warning("Couldn't load content. Please try another URL or method.")
+
+# Retrieve from session state if available
+job_desc = st.session_state.get('job_desc', "")
+
 
     if job_desc and st.button("Analyze"):
         with st.spinner("Detecting biases..."):
