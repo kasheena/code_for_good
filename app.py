@@ -115,4 +115,4 @@ if st.button("Analyze") and job_desc:
 
 # Footer
 st.markdown("---")
-st.markdown("Built with ♥ using [Streamlit](https://streamlit.io) | [Hugging Face](https://huggingface.co)")
+st.markdown("Built with ♥ | Kasheena Mulla) ")
