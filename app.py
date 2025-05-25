@@ -269,19 +269,6 @@ with col1:
                         
     elif input_method == "URL Scraping":
         url = st.text_input("Enter the job posting URL:", placeholder="https://example.com/job-posting")
-        
-        # Add some example URLs for testing
-        st.markdown("**Try these examples:**")
-        example_urls = [
-            "https://raw.githubusercontent.com/kasheena/code_for_good/main/Example_Subtle%20Bias.txt",
-            "https://raw.githubusercontent.com/kasheena/code_for_good/main/Example_Highly_Biased.txt"
-        ]
-        
-        selected_example = st.selectbox("Or select an example URL:", [""] + example_urls)
-        if selected_example:
-            url = selected_example
-            st.text_input("Selected URL:", value=url, disabled=True, key="selected_url_display")
-        
         if st.button("🔗 Scrape Content", type="secondary"):
             if url and url.startswith(('http://', 'https://')):
                 with st.spinner("Fetching content from URL..."):
@@ -290,8 +277,6 @@ with col1:
                         st.success(f"✅ Scraped {len(job_desc)} characters from URL")
                         with st.expander("Preview scraped content"):
                             st.text(job_desc[:500] + "..." if len(job_desc) > 500 else job_desc)
-                    else:
-                        st.error("Could not extract content from the URL. Please check the URL and try again.")
             else:
                 st.error("Please enter a valid URL starting with http:// or https://")
 
