@@ -1,10 +1,16 @@
 import streamlit as st
-from transformers import pipeline
 import PyPDF2
 from io import BytesIO
 import requests
 from bs4 import BeautifulSoup
 import re
+import asyncio
+
+# --- Fix for the event loop error ---
+try:
+    asyncio.get_running_loop()
+except RuntimeError:
+    asyncio.set_event_loop(asyncio.new_event_loop())
 
 # --- Constants ---
 BIAS_RULES = {
@@ -75,74 +81,78 @@ def extract_text_from_url(url):
         return ""
 
 # --- Streamlit App ---
-st.set_page_config(page_title="Job Ad Bias Detector", page_icon="🔍")
+def main():
+    st.set_page_config(page_title="Job Ad Bias Detector", page_icon="🔍")
 
-# Sidebar
-st.sidebar.title("About")
-st.sidebar.markdown("""
-This tool detects biased language in job postings that may discourage diverse applicants.
-- **Red**: Male-coded terms
-- **Blue**: Female-coded terms
-- **Orange**: Exclusionary terms
-""")
+    # Sidebar
+    st.sidebar.title("About")
+    st.sidebar.markdown("""
+    This tool detects biased language in job postings that may discourage diverse applicants.
+    - **Red**: Male-coded terms
+    - **Blue**: Female-coded terms
+    - **Orange**: Exclusionary terms
+    """)
 
-# Demo data
-DEMO_TEXTS = {
-    "Tech (Highly Biased)": "We need a ROCKSTAR Python ninja who can dominate the codebase! Must be aggressive in code reviews and work hard/play hard.",
-    "Healthcare (Subtle Bias)": "Seeking a compassionate nurse to nurture elderly patients. Must be quietly supportive and emotionally intelligent.",
-    "Neutral Example": "Software Engineer needed. Requirements: 3+ years Python experience, strong problem-solving skills."
-}
+    # Demo data
+    DEMO_TEXTS = {
+        "Tech (Highly Biased)": "We need a ROCKSTAR Python ninja who can dominate the codebase! Must be aggressive in code reviews and work hard/play hard.",
+        "Healthcare (Subtle Bias)": "Seeking a compassionate nurse to nurture elderly patients. Must be quietly supportive and emotionally intelligent.",
+        "Neutral Example": "Software Engineer needed. Requirements: 3+ years Python experience, strong problem-solving skills."
+    }
 
-# Main UI
-st.title("🔍 Job Ad Bias Detector")
-st.markdown("Paste a job description, upload a PDF, or enter a URL to analyze for biased language.")
+    # Main UI
+    st.title("🔍 Job Ad Bias Detector")
+    st.markdown("Paste a job description, upload a PDF, or enter a URL to analyze for biased language.")
 
-input_method = st.radio("Input method:", ("Text", "PDF Upload", "URL"))
+    input_method = st.radio("Input method:", ("Text", "PDF Upload", "URL"))
 
-job_desc = ""
-if input_method == "Text":
-    selected_demo = st.selectbox("Or select a demo text:", list(DEMO_TEXTS.keys()))
-    job_desc = st.text_area("Paste job description here:", DEMO_TEXTS[selected_demo], height=300)
-elif input_method == "PDF Upload":
-    uploaded_file = st.file_uploader("Upload PDF", type="pdf")
-    if uploaded_file:
-        job_desc = extract_text_from_pdf(uploaded_file)
-elif input_method == "URL":
-    url = st.text_input("Enter URL (supports job postings or GitHub raw text files):", 
-                       "https://raw.githubusercontent.com/kasheena/code_for_good/main/Example_Subtle%20Bias.txt")
-    if st.button("Load Content"):
-        with st.spinner("Loading content..."):
-            job_desc = extract_text_from_url(url)
-            if job_desc:
-                st.success("Content loaded successfully!")
+    job_desc = ""
+    if input_method == "Text":
+        selected_demo = st.selectbox("Or select a demo text:", list(DEMO_TEXTS.keys()))
+        job_desc = st.text_area("Paste job description here:", DEMO_TEXTS[selected_demo], height=300)
+    elif input_method == "PDF Upload":
+        uploaded_file = st.file_uploader("Upload PDF", type="pdf")
+        if uploaded_file:
+            job_desc = extract_text_from_pdf(uploaded_file)
+    elif input_method == "URL":
+        url = st.text_input("Enter URL (supports job postings or GitHub raw text files):", 
+                           "https://raw.githubusercontent.com/kasheena/code_for_good/main/Example_Subtle%20Bias.txt")
+        if st.button("Load Content"):
+            with st.spinner("Loading content..."):
+                job_desc = extract_text_from_url(url)
+                if job_desc:
+                    st.success("Content loaded successfully!")
+                else:
+                    st.warning("Couldn't load content. Please try another URL or method.")
+
+    if job_desc and st.button("Analyze"):
+        with st.spinner("Detecting biases..."):
+            # Highlight and display text
+            highlighted_text = highlight_bias(job_desc)
+            st.markdown(highlighted_text, unsafe_allow_html=True)
+            
+            # Calculate score
+            bias_score = calculate_bias_score(job_desc)
+            st.progress(bias_score / 10, text=f"Bias Score: {bias_score}/10 (lower is better)")
+            
+            # Show suggestions
+            st.subheader("Suggestions")
+            if bias_score >= 7:
+                st.error("⚠️ Highly biased language detected. Consider rewriting this job ad.")
+            elif bias_score >= 4:
+                st.warning("⚠️ Moderate bias detected. Some terms may discourage applicants.")
             else:
-                st.warning("Couldn't load content. Please try another URL or method.")
+                st.success("✅ Relatively neutral language detected.")
+            
+            # Example replacements
+            st.markdown("**Common fixes:**")
+            st.markdown("- 'Rockstar developer' → 'Skilled developer'")
+            st.markdown("- 'Dominant personality' → 'Leadership skills'")
+            st.markdown("- 'Young and energetic' → 'Enthusiastic'")
 
-if job_desc and st.button("Analyze"):
-    with st.spinner("Detecting biases..."):
-        # Highlight and display text
-        highlighted_text = highlight_bias(job_desc)
-        st.markdown(highlighted_text, unsafe_allow_html=True)
-        
-        # Calculate score
-        bias_score = calculate_bias_score(job_desc)
-        st.progress(bias_score / 10, text=f"Bias Score: {bias_score}/10 (lower is better)")
-        
-        # Show suggestions
-        st.subheader("Suggestions")
-        if bias_score >= 7:
-            st.error("⚠️ Highly biased language detected. Consider rewriting this job ad.")
-        elif bias_score >= 4:
-            st.warning("⚠️ Moderate bias detected. Some terms may discourage applicants.")
-        else:
-            st.success("✅ Relatively neutral language detected.")
-        
-        # Example replacements
-        st.markdown("**Common fixes:**")
-        st.markdown("- 'Rockstar developer' → 'Skilled developer'")
-        st.markdown("- 'Dominant personality' → 'Leadership skills'")
-        st.markdown("- 'Young and energetic' → 'Enthusiastic'")
+    # Footer
+    st.markdown("---")
+    st.markdown("Built with ♥ using Streamlit")
 
-# Footer
-st.markdown("---")
-st.markdown("Built with ♥ using Streamlit")
+if __name__ == "__main__":
+    main()
